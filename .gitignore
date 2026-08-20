@@ -1,6 +1,12 @@
 # Dependências
 **/node_modules/
 
+# O Prisma às vezes regenera um lockfile na raiz como efeito colateral
+# de rodar `prisma generate`/`migrate` a partir de /backend (o
+# schema.prisma fica em /database). O package.json da raiz é
+# intencional; o lockfile não é.
+/package-lock.json
+
 # Build
 **/dist/
 **/build/

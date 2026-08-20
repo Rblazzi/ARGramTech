@@ -1,0 +1,5 @@
+{
+  "name": "lanchonete-delivery",
+  "private": true,
+  "description": "Marcador de raiz do monorepo — as dependências reais ficam em /backend e /frontend. Este arquivo evita que o Prisma tente auto-instalar pacotes na raiz (o schema.prisma fica em /database, um nível acima do backend)."
+}

@@ -19,4 +19,5 @@ export const envValidationSchema = Joi.object({
   THROTTLE_LIMIT: Joi.number().default(100),
 
   PIX_WEBHOOK_SECRET: Joi.string().min(8).required(),
+  CRON_SECRET: Joi.string().min(8).required(),
 });

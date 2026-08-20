@@ -27,10 +27,11 @@ async function main() {
     });
   }
 
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+  const { data: existingUsers, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
+  if (listUsersError) throw listUsersError;
 
   async function upsertStaffUser(email: string, password: string, name: string, role: UserRole) {
-    let authId = existingUsers?.users.find((u) => u.email === email)?.id;
+    let authId = existingUsers.users.find((u) => u.email === email)?.id;
     if (!authId) {
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,

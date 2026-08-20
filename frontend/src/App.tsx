@@ -1,0 +1,75 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { DashboardPage } from './pages/admin/DashboardPage';
+import { CategoriesPage } from './pages/admin/CategoriesPage';
+import { ProductsPage } from './pages/admin/ProductsPage';
+import { DeliveryZonesPage } from './pages/admin/DeliveryZonesPage';
+import { CouponsPage } from './pages/admin/CouponsPage';
+import { PromotionsPage } from './pages/admin/PromotionsPage';
+import { ReportsPage } from './pages/admin/ReportsPage';
+import { SiteLayout } from './components/site/SiteLayout';
+import { CardapioPage } from './pages/site/CardapioPage';
+import { ProductPage } from './pages/site/ProductPage';
+import { CartPage } from './pages/site/CartPage';
+import { CheckoutPage } from './pages/site/CheckoutPage';
+import { OrderPage } from './pages/site/OrderPage';
+import { OrdersListPage } from './pages/site/OrdersListPage';
+import { GroupOrderPage } from './pages/site/GroupOrderPage';
+import { LoyaltyPage } from './pages/site/LoyaltyPage';
+import { NotificationsPage } from './pages/site/NotificationsPage';
+import { KitchenPage } from './pages/staff/KitchenPage';
+import { DriverPage } from './pages/staff/DriverPage';
+
+const ADMIN_ROLES = ['ADMIN', 'MANAGER'] as const;
+const KITCHEN_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT', 'KITCHEN'] as const;
+const DRIVER_ROLES = ['DRIVER'] as const;
+
+export function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/cardapio" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/criar-conta" element={<RegisterPage />} />
+
+      <Route element={<SiteLayout />}>
+        <Route path="/cardapio" element={<CardapioPage />} />
+        <Route path="/produto/:id" element={<ProductPage />} />
+
+        <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
+          <Route path="/carrinho" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/pedidos" element={<OrdersListPage />} />
+          <Route path="/pedido/:id" element={<OrderPage />} />
+          <Route path="/pedido-em-grupo/:code" element={<GroupOrderPage />} />
+          <Route path="/fidelidade" element={<LoyaltyPage />} />
+          <Route path="/notificacoes" element={<NotificationsPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={[...ADMIN_ROLES]} />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="categorias" element={<CategoriesPage />} />
+          <Route path="produtos" element={<ProductsPage />} />
+          <Route path="zonas-entrega" element={<DeliveryZonesPage />} />
+          <Route path="cupons" element={<CouponsPage />} />
+          <Route path="promocoes" element={<PromotionsPage />} />
+          <Route path="relatorios" element={<ReportsPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={[...KITCHEN_ROLES]} />}>
+        <Route path="/cozinha" element={<KitchenPage />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={[...DRIVER_ROLES]} />}>
+        <Route path="/entregador" element={<DriverPage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/cardapio" replace />} />
+    </Routes>
+  );
+}

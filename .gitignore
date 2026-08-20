@@ -1,0 +1,29 @@
+# Dependências
+**/node_modules/
+
+# Build
+**/dist/
+**/build/
+**/.next/
+
+# Ambiente
+**/.env
+**/.env.local
+!**/.env.example
+
+# Supabase local
+**/supabase/.branches/
+**/supabase/.temp/
+
+# Logs e cache
+**/*.log
+**/.turbo/
+**/.cache/
+
+# Editor / SO
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Estado interno de assistentes de IA (não é parte do projeto)
+.claude/

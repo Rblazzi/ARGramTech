@@ -1,0 +1,17 @@
+// Persistência dos tokens de sessão. Centralizado aqui para não espalhar
+// chamadas a localStorage pelo app.
+const ACCESS_KEY = 'lanchonete.accessToken';
+const REFRESH_KEY = 'lanchonete.refreshToken';
+
+export const tokenStorage = {
+  getAccessToken: () => localStorage.getItem(ACCESS_KEY),
+  getRefreshToken: () => localStorage.getItem(REFRESH_KEY),
+  setTokens: (accessToken: string, refreshToken: string) => {
+    localStorage.setItem(ACCESS_KEY, accessToken);
+    localStorage.setItem(REFRESH_KEY, refreshToken);
+  },
+  clear: () => {
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  },
+};

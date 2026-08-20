@@ -53,17 +53,41 @@ async function main() {
       create: { id: authId, email, name, role },
       update: { role },
     });
+    return authId;
   }
 
-  console.log('Criando usuário administrador...');
-  const adminEmail = 'admin@lanchonete.local';
-  const adminPassword = 'admin123456';
-  await upsertStaffUser(adminEmail, adminPassword, 'Administrador', UserRole.ADMIN);
+  // Uma conta de teste por setor (role) do sistema, para permitir testar
+  // cada painel/acesso separadamente. DRIVER também precisa de uma linha
+  // em delivery_drivers (a FK usa o mesmo id do user); CUSTOMER também
+  // precisa de uma linha em customers — os demais setores usam só User.
+  const staffAccounts = [
+    { email: 'admin@lanchonete.local', password: 'admin123456', name: 'Administrador', role: UserRole.ADMIN },
+    { email: 'gerente@lanchonete.local', password: 'gerente123456', name: 'Gerente', role: UserRole.MANAGER },
+    { email: 'atendente@lanchonete.local', password: 'atendente123456', name: 'Atendente', role: UserRole.ATTENDANT },
+    { email: 'cozinha@lanchonete.local', password: 'cozinha123456', name: 'Equipe Cozinha', role: UserRole.KITCHEN },
+    { email: 'entregador@lanchonete.local', password: 'entregador123456', name: 'Entregador', role: UserRole.DRIVER },
+    { email: 'cliente@lanchonete.local', password: 'cliente123456', name: 'Cliente Teste', role: UserRole.CUSTOMER },
+  ];
 
-  console.log('Criando usuário da cozinha...');
-  const kitchenEmail = 'cozinha@lanchonete.local';
-  const kitchenPassword = 'cozinha123456';
-  await upsertStaffUser(kitchenEmail, kitchenPassword, 'Equipe Cozinha', UserRole.KITCHEN);
+  for (const account of staffAccounts) {
+    console.log(`Criando usuário ${account.role}...`);
+    const authId = await upsertStaffUser(account.email, account.password, account.name, account.role);
+
+    if (account.role === UserRole.DRIVER) {
+      await prisma.deliveryDriver.upsert({
+        where: { id: authId },
+        create: { id: authId },
+        update: {},
+      });
+    }
+    if (account.role === UserRole.CUSTOMER) {
+      await prisma.customer.upsert({
+        where: { id: authId },
+        create: { id: authId },
+        update: {},
+      });
+    }
+  }
 
   console.log('Criando categorias básicas...');
   const categories = ['Lanches', 'Hambúrgueres', 'Combos', 'Porções', 'Bebidas', 'Sobremesas'];
@@ -95,8 +119,9 @@ async function main() {
   });
 
   console.log('Seed concluído.');
-  console.log(`Login admin   -> e-mail: ${adminEmail} | senha: ${adminPassword}`);
-  console.log(`Login cozinha -> e-mail: ${kitchenEmail} | senha: ${kitchenPassword}`);
+  for (const account of staffAccounts) {
+    console.log(`Login ${account.role.padEnd(10)} -> e-mail: ${account.email} | senha: ${account.password}`);
+  }
 
   await prisma.$disconnect();
 }

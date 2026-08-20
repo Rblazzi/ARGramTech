@@ -27,11 +27,17 @@ async function main() {
     });
   }
 
-  const { data: existingUsers, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
+  const { data: listUsersData, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
   if (listUsersError) throw listUsersError;
+  // Extraído para uma variável separada e concreta (array simples, sem
+  // union/nulidade) de propósito: TypeScript não propaga o estreitamento
+  // de tipo de uma verificação de erro para dentro de funções aninhadas
+  // (closures), então referenciar `listUsersData.users` direto dali de
+  // dentro de upsertStaffUser voltaria a dar erro de tipo.
+  const existingUsers = listUsersData.users;
 
   async function upsertStaffUser(email: string, password: string, name: string, role: UserRole) {
-    let authId = existingUsers.users.find((u) => u.email === email)?.id;
+    let authId = existingUsers.find((u) => u.email === email)?.id;
     if (!authId) {
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,

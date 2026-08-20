@@ -12,7 +12,9 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN'),
+    // CORS_ORIGIN aceita uma lista separada por vírgula (ex.: domínio
+    // próprio + www + o domínio *.vercel.app de fallback).
+    origin: config.get<string>('CORS_ORIGIN')!.split(',').map((o) => o.trim()),
     credentials: true,
   });
 

@@ -24,7 +24,10 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   app.use(helmet());
-  app.enableCors({ origin: config.get<string>('CORS_ORIGIN'), credentials: true });
+  app.enableCors({
+    origin: config.get<string>('CORS_ORIGIN')!.split(',').map((o) => o.trim()),
+    credentials: true,
+  });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),

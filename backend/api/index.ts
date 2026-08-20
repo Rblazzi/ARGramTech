@@ -36,6 +36,14 @@ async function bootstrap() {
 
 export default async function handler(req: Request, res: Response) {
   bootstrapPromise ??= bootstrap();
-  await bootstrapPromise;
+  try {
+    await bootstrapPromise;
+  } catch (err) {
+    // Se o bootstrap falhar (ex.: env var faltando, banco fora do ar),
+    // não deixa a instância "presa" repetindo o mesmo erro pra sempre —
+    // libera pra tentar de novo na próxima invocação.
+    bootstrapPromise = null;
+    throw err;
+  }
   server(req, res);
 }

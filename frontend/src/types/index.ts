@@ -125,6 +125,20 @@ export interface CartSummary {
   coupon: { code: string; type: string; value: number } | null;
 }
 
+// Retorno de GET /geocoding/search e /geocoding/reverse (proxy pro
+// Nominatim/OpenStreetMap — ver GeocodingService no backend).
+export interface GeocodingResult {
+  displayName: string;
+  latitude: number;
+  longitude: number;
+  street: string | null;
+  number: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+}
+
 export interface Address {
   id: string;
   label: string | null;
@@ -136,6 +150,8 @@ export interface Address {
   state: string;
   zipCode: string;
   isDefault: boolean;
+  latitude: string | null;
+  longitude: string | null;
 }
 
 export type OrderType = 'DELIVERY' | 'PICKUP';

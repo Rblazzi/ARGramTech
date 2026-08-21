@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsLatitude, IsLongitude, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateAddressDto {
   @IsOptional()
@@ -36,4 +36,15 @@ export class CreateAddressDto {
   @IsOptional()
   @IsBoolean()
   isDefault?: boolean;
+
+  // Preenchidos quando o endereço é escolhido via busca/mapa
+  // (GeocodingModule) — permitem mostrar o pino exato pro entregador em
+  // vez de só o texto do endereço.
+  @IsOptional()
+  @IsLatitude()
+  latitude?: number;
+
+  @IsOptional()
+  @IsLongitude()
+  longitude?: number;
 }

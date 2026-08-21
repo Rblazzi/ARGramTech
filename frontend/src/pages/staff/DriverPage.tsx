@@ -1,10 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
-import type { Delivery } from '../../types';
+import { LocationMap } from '../../components/LocationMap';
+import type { Address, Delivery } from '../../types';
 
 function formatPrice(value: string) {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+// Abre o app de GPS (Google Maps) já com a rota até o endereço. Usa
+// coordenadas quando o endereço tem (mais preciso), ou cai pro texto do
+// endereço quando não tem — endereços criados antes do mapa existir não
+// têm latitude/longitude, mas o link ainda funciona buscando pelo texto.
+function buildGpsUrl(address: Address): string {
+  if (address.latitude && address.longitude) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${address.latitude},${address.longitude}`;
+  }
+  const text = `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city} - ${address.state}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(text)}`;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -27,10 +40,31 @@ function DeliveryCard({ delivery, action }: { delivery: Delivery; action: React.
       </div>
 
       {delivery.order.address && (
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          {delivery.order.address.street}, {delivery.order.address.number} — {delivery.order.address.neighborhood},{' '}
-          {delivery.order.address.city}/{delivery.order.address.state}
-        </p>
+        <>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">
+            {delivery.order.address.street}, {delivery.order.address.number} — {delivery.order.address.neighborhood},{' '}
+            {delivery.order.address.city}/{delivery.order.address.state}
+          </p>
+
+          {delivery.order.address.latitude && delivery.order.address.longitude && (
+            <div className="mt-2">
+              <LocationMap
+                latitude={Number(delivery.order.address.latitude)}
+                longitude={Number(delivery.order.address.longitude)}
+                height={140}
+              />
+            </div>
+          )}
+
+          <a
+            href={buildGpsUrl(delivery.order.address)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-sm text-[var(--brand)] hover:underline"
+          >
+            📍 Abrir GPS até o cliente
+          </a>
+        </>
       )}
 
       <div className="mt-3 flex items-center justify-between">

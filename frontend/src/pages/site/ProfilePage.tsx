@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { Skeleton } from '../../components/ui/Skeleton';
-import type { Address, UserProfile } from '../../types';
+import { LocationMap } from '../../components/LocationMap';
+import type { Address, GeocodingResult, UserProfile } from '../../types';
 
 const emptyAddressForm = {
   label: '',
@@ -15,6 +16,8 @@ const emptyAddressForm = {
   city: '',
   state: '',
   zipCode: '',
+  latitude: null as number | null,
+  longitude: null as number | null,
 };
 
 export function ProfilePage() {
@@ -62,6 +65,70 @@ export function ProfilePage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
 
+  const [mapQuery, setMapQuery] = useState('');
+  const [mapResults, setMapResults] = useState<GeocodingResult[]>([]);
+  const [isSearchingMap, setIsSearchingMap] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+
+  function applyGeocodingResult(result: GeocodingResult) {
+    setAddressForm((f) => ({
+      ...f,
+      street: result.street ?? f.street,
+      neighborhood: result.neighborhood ?? f.neighborhood,
+      city: result.city ?? f.city,
+      state: result.state ?? f.state,
+      zipCode: result.zipCode ?? f.zipCode,
+      number: result.number ?? f.number,
+      latitude: result.latitude,
+      longitude: result.longitude,
+    }));
+    setMapResults([]);
+    setMapQuery('');
+  }
+
+  async function handleMapSearch() {
+    if (mapQuery.trim().length < 3) return;
+    setIsSearchingMap(true);
+    setMapError(null);
+    try {
+      const { data } = await api.get<GeocodingResult[]>('/geocoding/search', { params: { q: mapQuery } });
+      if (data.length === 0) setMapError('Nenhum endereço encontrado');
+      setMapResults(data);
+    } catch {
+      setMapError('Não foi possível buscar o endereço agora');
+    } finally {
+      setIsSearchingMap(false);
+    }
+  }
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setMapError('Seu navegador não suporta localização automática');
+      return;
+    }
+    setIsLocating(true);
+    setMapError(null);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { data } = await api.get<GeocodingResult>('/geocoding/reverse', {
+            params: { lat: position.coords.latitude, lon: position.coords.longitude },
+          });
+          applyGeocodingResult(data);
+        } catch {
+          setMapError('Não foi possível identificar o endereço dessa localização');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      () => {
+        setMapError('Não foi possível acessar sua localização — verifique a permissão do navegador');
+        setIsLocating(false);
+      },
+    );
+  }
+
   const createAddress = useMutation({
     mutationFn: (payload: typeof emptyAddressForm) => api.post<Address>('/addresses', payload),
     onSuccess: () => {
@@ -107,6 +174,8 @@ export function ProfilePage() {
     setAddressForm(emptyAddressForm);
     setIsFormOpen(true);
     setAddressError(null);
+    setMapError(null);
+    setMapResults([]);
   }
 
   function openEditAddressForm(address: Address) {
@@ -120,9 +189,13 @@ export function ProfilePage() {
       city: address.city,
       state: address.state,
       zipCode: address.zipCode,
+      latitude: address.latitude ? Number(address.latitude) : null,
+      longitude: address.longitude ? Number(address.longitude) : null,
     });
     setIsFormOpen(true);
     setAddressError(null);
+    setMapError(null);
+    setMapResults([]);
   }
 
   function handleAddressSubmit(event: FormEvent) {
@@ -272,6 +345,74 @@ export function ProfilePage() {
 
         {isFormOpen && (
           <form onSubmit={handleAddressSubmit} className="mt-4 grid gap-3 rounded-lg border border-[var(--border)] p-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="text-sm text-[var(--text-muted)]">Achar endereço pelo mapa</label>
+              <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+                <input
+                  placeholder="Digite a rua, bairro ou cidade..."
+                  value={mapQuery}
+                  onChange={(e) => setMapQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleMapSearch();
+                    }
+                  }}
+                  className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)]"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleMapSearch}
+                    disabled={isSearchingMap}
+                    className="whitespace-nowrap rounded-lg border border-[var(--border)] px-3 py-2 text-sm transition hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                  >
+                    {isSearchingMap ? 'Buscando...' : 'Buscar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={isLocating}
+                    className="whitespace-nowrap rounded-lg border border-[var(--border)] px-3 py-2 text-sm transition hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                  >
+                    {isLocating ? 'Localizando...' : '📍 Usar minha localização'}
+                  </button>
+                </div>
+              </div>
+
+              {mapError && <p className="mt-2 text-sm text-red-400">{mapError}</p>}
+
+              {mapResults.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1 rounded-lg border border-[var(--border)] p-1">
+                  {mapResults.map((result, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => applyGeocodingResult(result)}
+                        className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-[var(--surface-hover)]"
+                      >
+                        {result.displayName}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {addressForm.latitude != null && addressForm.longitude != null && (
+                <div className="mt-3">
+                  <LocationMap
+                    latitude={addressForm.latitude}
+                    longitude={addressForm.longitude}
+                    interactive
+                    onChange={(lat, lng) => setAddressForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+                  />
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Arraste o pino ou clique no mapa pra ajustar a posição exata.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <input
               placeholder="Nome do endereço (ex.: Casa)"
               value={addressForm.label}

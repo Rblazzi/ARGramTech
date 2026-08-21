@@ -26,6 +26,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { PlatformModule } from './modules/platform/platform.module';
+import { GeocodingModule } from './modules/geocoding/geocoding.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { PlatformModule } from './modules/platform/platform.module';
     CompaniesModule,
     UploadsModule,
     PlatformModule,
+    GeocodingModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

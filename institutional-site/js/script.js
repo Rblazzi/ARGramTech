@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBackToTop();
   initFooterYear();
   initDynamicContent();
+  initCountUp();
 });
 
 // Domínio estável do backend (deploy de produção na Vercel) — precisa ser
@@ -28,7 +29,7 @@ async function initDynamicContent() {
     if (!response.ok) return;
     const content = await response.json();
 
-    setText('#inicio .eyebrow', content.heroEyebrow);
+    setText('.status-strip__label', content.heroEyebrow);
     setText('.hero__text', content.heroText);
     setText('.hero__actions .btn--primary', content.heroCtaPrimaryLabel);
     setText('.hero__actions .btn--ghost', content.heroCtaSecondaryLabel);
@@ -135,4 +136,48 @@ function initBackToTop() {
 function initFooterYear() {
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+}
+
+// Números do painel do hero contam de 0 até o valor real quando entram na
+// tela — reforça a sensação de "painel ao vivo". Respeita
+// prefers-reduced-motion (só mostra o valor final, sem animação).
+function initCountUp() {
+  const items = document.querySelectorAll('[data-count-to]');
+  if (items.length === 0) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    items.forEach((item) => {
+      item.textContent = item.getAttribute('data-count-to');
+    });
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        animateCount(entry.target);
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.4 },
+  );
+
+  items.forEach((item) => observer.observe(item));
+}
+
+function animateCount(el) {
+  const target = Number(el.getAttribute('data-count-to'));
+  const duration = 900;
+  const start = performance.now();
+
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = String(Math.round(target * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
 }

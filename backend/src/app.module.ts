@@ -24,6 +24,8 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { PlatformModule } from './modules/platform/platform.module';
 
 @Module({
   imports: [
@@ -61,24 +63,25 @@ import { CompaniesModule } from './modules/companies/companies.module';
     PromotionsModule,
     ReportsModule,
     CompaniesModule,
+    UploadsModule,
+    PlatformModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   // Resolve a empresa (tenant) em toda rota antes de qualquer guard —
   // exceto o webhook de pagamento e o disparador de cron, que são
-  // chamados por sistemas externos (gateway de pagamento, Vercel Cron),
-  // não por um cliente que sabe de qual empresa está falando.
+  // chamados por sistemas externos (gateway de pagamento, Vercel Cron), e
+  // exceto tudo em /platform, que é ação do DONO DA PLATAFORMA, não de
+  // uma empresa específica — não faz sentido exigir (nem tentar resolver)
+  // um tenant ali (ver PlatformAdminGuard).
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantMiddleware)
       .exclude(
         { path: 'payments/webhook/(.*)', method: RequestMethod.ALL },
         { path: 'promotions/cron-trigger', method: RequestMethod.ALL },
-        // Criar empresa é ação de plataforma, não de uma empresa
-        // específica — não faz sentido exigir (nem tentar resolver) um
-        // tenant aqui (ver PlatformAdminGuard).
-        { path: 'companies', method: RequestMethod.POST },
+        { path: 'platform/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
   }

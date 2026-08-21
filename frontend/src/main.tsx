@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import { App } from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
+import { PlatformAuthProvider } from './contexts/PlatformAuthContext.tsx'
 import { CompanyProvider } from './contexts/CompanyContext.tsx'
 import { CompanyGate } from './components/CompanyGate.tsx'
 
@@ -17,7 +18,9 @@ createRoot(document.getElementById('root')!).render(
         <CompanyGate>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <App />
+              <PlatformAuthProvider>
+                <App />
+              </PlatformAuthProvider>
             </AuthProvider>
           </QueryClientProvider>
         </CompanyGate>

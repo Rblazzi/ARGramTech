@@ -18,6 +18,7 @@ export interface Company {
   customDomain: string | null;
   name: string;
   logoUrl: string | null;
+  bannerUrl: string | null;
   primaryColor: string;
   secondaryColor: string | null;
   phone: string | null;

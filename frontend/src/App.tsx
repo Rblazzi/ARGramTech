@@ -10,7 +10,13 @@ import { DeliveryZonesPage } from './pages/admin/DeliveryZonesPage';
 import { CouponsPage } from './pages/admin/CouponsPage';
 import { PromotionsPage } from './pages/admin/PromotionsPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
-import { CreateCompanyPage } from './pages/admin/CreateCompanyPage';
+import { CompanySettingsPage } from './pages/admin/CompanySettingsPage';
+import { PlatformProtectedRoute } from './components/platform/PlatformProtectedRoute';
+import { PlatformLayout } from './components/platform/PlatformLayout';
+import { PlatformLoginPage } from './pages/platform/PlatformLoginPage';
+import { PlatformCompaniesPage } from './pages/platform/PlatformCompaniesPage';
+import { CreateCompanyPage } from './pages/platform/CreateCompanyPage';
+import { PlatformSiteContentPage } from './pages/platform/PlatformSiteContentPage';
 import { SiteLayout } from './components/site/SiteLayout';
 import { CardapioPage } from './pages/site/CardapioPage';
 import { ProductPage } from './pages/site/ProductPage';
@@ -38,6 +44,20 @@ const DRIVER_ROLES = ['DRIVER'] as const;
 export function App() {
   return (
     <Routes>
+      {/* Painel do dono da plataforma — fora do namespace de qualquer
+          empresa de propósito (login e sessão próprios, ver
+          PlatformAuthContext). "/plataforma" é reservado em
+          CompanyContext pra nunca ser tratado como slug de empresa. */}
+      <Route path="/plataforma/login" element={<PlatformLoginPage />} />
+      <Route path="/plataforma" element={<PlatformProtectedRoute />}>
+        <Route element={<PlatformLayout />}>
+          <Route index element={<Navigate to="empresas" replace />} />
+          <Route path="empresas" element={<PlatformCompaniesPage />} />
+          <Route path="empresas/nova" element={<CreateCompanyPage />} />
+          <Route path="site" element={<PlatformSiteContentPage />} />
+        </Route>
+      </Route>
+
       <Route path="/:companySlug">
         <Route path="login" element={<LoginPage />} />
         <Route path="criar-conta" element={<RegisterPage />} />
@@ -66,7 +86,7 @@ export function App() {
             <Route path="cupons" element={<CouponsPage />} />
             <Route path="promocoes" element={<PromotionsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
-            <Route path="plataforma/nova-empresa" element={<CreateCompanyPage />} />
+            <Route path="configuracoes" element={<CompanySettingsPage />} />
           </Route>
         </Route>
 

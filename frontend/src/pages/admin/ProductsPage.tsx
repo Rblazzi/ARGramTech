@@ -3,9 +3,10 @@ import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
+import { ImageUploadField } from '../../components/ImageUploadField';
 import type { Category, Product } from '../../types';
 
-const emptyForm = { categoryId: '', name: '', price: '', internalCode: '', description: '' };
+const emptyForm = { categoryId: '', name: '', price: '', internalCode: '', description: '', imageUrl: '' };
 
 export function ProductsPage() {
   const queryClient = useQueryClient();
@@ -107,6 +108,16 @@ export function ProductsPage() {
           className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)] sm:col-span-2"
         />
 
+        <div className="sm:col-span-2">
+          <ImageUploadField
+            label="Foto do produto"
+            value={form.imageUrl}
+            onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
+            client={api}
+            endpoint="/uploads/image"
+          />
+        </div>
+
         {error && <p className="text-sm text-red-400 sm:col-span-2">{error}</p>}
 
         <button
@@ -139,7 +150,16 @@ export function ProductsPage() {
             )}
             {products?.map((product) => (
               <tr key={product.id} className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">{product.name}</td>
+                <td className="flex items-center gap-2 px-4 py-3">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} className="h-8 w-8 rounded object-cover" />
+                  ) : (
+                    <span className="flex h-8 w-8 items-center justify-center rounded bg-[var(--bg)] text-xs text-[var(--text-muted)]">
+                      —
+                    </span>
+                  )}
+                  {product.name}
+                </td>
                 <td className="px-4 py-3 text-[var(--text-muted)]">{product.category.name}</td>
                 <td className="px-4 py-3">
                   {Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}

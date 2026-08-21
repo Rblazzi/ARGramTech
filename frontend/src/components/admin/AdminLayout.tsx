@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/admin/cupons', label: 'Cupons' },
   { to: '/admin/promocoes', label: 'Promoções' },
   { to: '/admin/relatorios', label: 'Relatórios' },
+  { to: '/admin/configuracoes', label: 'Configurações' },
 ];
 
 export function AdminLayout() {
@@ -51,26 +52,22 @@ export function AdminLayout() {
           {item.label}
         </NavLink>
       ))}
-
-      {user?.isPlatformAdmin && (
-        <>
-          <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Plataforma</p>
-          <NavLink
-            to={cp('/admin/plataforma/nova-empresa')}
-            onClick={() => setIsMenuOpen(false)}
-            className={({ isActive }) =>
-              `rounded-lg px-3 py-2 text-sm transition ${
-                isActive
-                  ? 'bg-[var(--brand)] text-[var(--brand-foreground)] font-medium'
-                  : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]'
-              }`
-            }
-          >
-            + Nova empresa
-          </NavLink>
-        </>
-      )}
     </nav>
+  );
+
+  // Link pro painel do dono do sistema — de propósito um <a> absoluto
+  // (não cp()/<NavLink>), porque /plataforma fica FORA do namespace desta
+  // empresa e tem sessão própria (ver PlatformAuthContext). Visualmente
+  // separado do resto do menu pra nunca confundir com algo desta empresa.
+  const platformLinkBlock = user?.isPlatformAdmin && (
+    <div className="border-t border-[var(--border)] p-3">
+      <a
+        href="/plataforma"
+        className="flex items-center justify-center rounded-lg border border-dashed border-[var(--border)] px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
+      >
+        Painel da plataforma →
+      </a>
+    </div>
   );
 
   const userBlock = (
@@ -115,6 +112,7 @@ export function AdminLayout() {
       >
         {brandBlock}
         {navBlock}
+        {platformLinkBlock}
         {userBlock}
       </aside>
 

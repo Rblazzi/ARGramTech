@@ -760,6 +760,7 @@ model Company {
   customDomain       String?     @unique @map("custom_domain")
   name               String
   logoUrl            String?     @map("logo_url")
+  bannerUrl          String?     @map("banner_url")
   primaryColor       String      @default("#FF7A00") @map("primary_color")
   secondaryColor     String?     @map("secondary_color")
   phone              String?
@@ -793,6 +794,25 @@ model Company {
   notifications Notification[]
 
   @@map("companies")
+}
+
+// Conteúdo editável do site institucional (argramtech.com.br) — uma
+// única linha (singleton), editada pelo dono da plataforma em
+// /plataforma/site e lida publicamente pelo site estático via
+// GET /platform/site-content. O título principal do hero (com o
+// gradiente na palavra "transformar") fica fixo no HTML de propósito —
+// não entra aqui pra não perder o efeito visual.
+model SiteContent {
+  id                    String   @id @default(uuid()) @db.Uuid
+  heroEyebrow           String   @default("Plataforma de tecnologia para empresas") @map("hero_eyebrow")
+  heroText              String   @default("Tenha sistemas completos, modernos e fáceis de usar para simplificar a gestão da sua empresa.") @map("hero_text")
+  heroCtaPrimaryLabel   String   @default("Conheça nossos produtos") @map("hero_cta_primary_label")
+  heroCtaSecondaryLabel String   @default("Solicitar demonstração") @map("hero_cta_secondary_label")
+  footerTagline         String   @default("Tecnologia inteligente para transformar o seu negócio.") @map("footer_tagline")
+  logoUrl               String?  @map("logo_url")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("site_content")
 }
 
 // ------------------------------------------------------------------

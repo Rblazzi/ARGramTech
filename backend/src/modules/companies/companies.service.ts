@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { UsersService } from '../users/users.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
 
 // Campos que o frontend pode exibir antes mesmo de logar (nome, cor, logo,
 // horário etc.). pixKey/autoMessages/lastOrderNumber ficam de fora de
@@ -64,6 +65,14 @@ export class CompaniesService {
     await this.usersService.upsertIdentity({ id: data.user.id, email: dto.adminEmail, name: dto.adminName });
     await this.usersService.ensureMembership(data.user.id, company.id, UserRole.ADMIN);
 
+    return toPublicDto(company);
+  }
+
+  // Edição da própria marca pelo admin da empresa (nome, logo, banner,
+  // cores, contato) — nunca slug/customDomain, que são decisões da
+  // plataforma na hora de criar a empresa.
+  async updateCurrent(companyId: string, dto: UpdateCompanyDto) {
+    const company = await this.prisma.company.update({ where: { id: companyId }, data: dto });
     return toPublicDto(company);
   }
 }

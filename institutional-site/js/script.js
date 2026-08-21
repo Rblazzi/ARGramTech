@@ -9,7 +9,46 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initBackToTop();
   initFooterYear();
+  initDynamicContent();
 });
+
+// Domínio estável do backend (deploy de produção na Vercel) — precisa ser
+// absoluto porque este site e o backend são origens diferentes; o
+// vercel.json deste projeto só faz rewrite pro app React, não pro backend.
+const API_BASE_URL = 'https://ar-gram-tech-o4ef-mu.vercel.app/api';
+
+// Busca o conteúdo editável (textos-chave + logo) que o dono da
+// plataforma configura em /plataforma/site e sobrescreve o HTML estático
+// com ele. Em qualquer falha (rede, CORS, endpoint fora do ar), mantém o
+// conteúdo padrão que já está no HTML — por isso todo passo aqui é
+// silenciosamente tolerante a erro.
+async function initDynamicContent() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/platform/site-content`);
+    if (!response.ok) return;
+    const content = await response.json();
+
+    setText('#inicio .eyebrow', content.heroEyebrow);
+    setText('.hero__text', content.heroText);
+    setText('.hero__actions .btn--primary', content.heroCtaPrimaryLabel);
+    setText('.hero__actions .btn--ghost', content.heroCtaSecondaryLabel);
+    setText('.footer__tagline', content.footerTagline);
+
+    if (content.logoUrl) {
+      document.querySelectorAll('.brand__mark').forEach((img) => {
+        img.src = content.logoUrl;
+      });
+    }
+  } catch {
+    // Site continua com o conteúdo estático padrão.
+  }
+}
+
+function setText(selector, value) {
+  if (!value) return;
+  const el = document.querySelector(selector);
+  if (el) el.textContent = value;
+}
 
 // Header ganha fundo/blur depois de rolar um pouco a página.
 function initHeaderScroll() {

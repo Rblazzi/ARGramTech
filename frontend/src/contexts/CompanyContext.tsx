@@ -24,6 +24,12 @@ function firstPathSegment(pathname: string): string | null {
   return match ? match[1] : null;
 }
 
+// Segmentos de topo que NÃO são slug de empresa nenhuma — hoje só
+// "plataforma" (painel do dono do sistema, ver PlatformAuthContext). Sem
+// isso, visitar /plataforma faria essa função tratar "plataforma" como um
+// slug inválido e o CompanyGate travaria a tela pra sempre.
+const RESERVED_TOP_SEGMENTS = ['plataforma'];
+
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +43,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
     async function resolve() {
       const slug = firstPathSegment(window.location.pathname);
+
+      if (slug && RESERVED_TOP_SEGMENTS.includes(slug)) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const { data } = await api.get<Company>('/companies/resolve', {

@@ -35,6 +35,8 @@ export class PlatformAdminGuard implements CanActivate {
       throw new ForbiddenException('Ação restrita ao administrador da plataforma');
     }
 
+    (request as Request & { platformUser: typeof user }).platformUser = user;
+
     return true;
   }
 }

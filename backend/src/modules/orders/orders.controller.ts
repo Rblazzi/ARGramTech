@@ -5,6 +5,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { CurrentCompany } from '../../common/decorators/current-company.decorator';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -22,8 +23,8 @@ export class OrdersController {
   // de declaração para "kitchen" não ser interpretado como um :id.
   @Roles(...STAFF_ROLES)
   @Get('kitchen')
-  findActiveForStaff() {
-    return this.ordersService.findActiveForStaff();
+  findActiveForStaff(@CurrentCompany() companyId: string) {
+    return this.ordersService.findActiveForStaff(companyId);
   }
 
   @Roles(...STAFF_ROLES)
@@ -33,21 +34,21 @@ export class OrdersController {
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
   ) {
-    return this.ordersService.updateStatus(user.id, id, dto);
+    return this.ordersService.updateStatus(user.id, user.companyId, id, dto);
   }
 
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.ordersService.findAllForCustomer(user.id);
+    return this.ordersService.findAllForCustomer(user.membershipId);
   }
 
   @Get(':id')
   findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.ordersService.findOneForCustomer(user.id, id);
+    return this.ordersService.findOneForCustomer(user.membershipId, id);
   }
 
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.id, dto);
+    return this.ordersService.create(user.membershipId, user.companyId, dto);
   }
 }

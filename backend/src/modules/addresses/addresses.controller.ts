@@ -17,22 +17,22 @@ export class AddressesController {
 
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.addressesService.findAllForCustomer(user.id);
+    return this.addressesService.findAllForCustomer(user.membershipId);
   }
 
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAddressDto) {
-    return this.addressesService.create(user.id, dto);
+    return this.addressesService.create(user.membershipId, dto);
   }
 
   @Patch(':id')
   update(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: UpdateAddressDto) {
-    return this.addressesService.update(user.id, id, dto);
+    return this.addressesService.update(user.membershipId, id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    await this.addressesService.remove(user.id, id);
+    await this.addressesService.remove(user.membershipId, id);
   }
 }

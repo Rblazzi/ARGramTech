@@ -18,53 +18,69 @@ export class PromotionsService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  findAll() {
-    return this.prisma.promotion.findMany({ include: { coupon: true }, orderBy: { createdAt: 'desc' } });
+  findAll(companyId: string) {
+    return this.prisma.promotion.findMany({ where: { companyId }, include: { coupon: true }, orderBy: { createdAt: 'desc' } });
   }
 
-  async findByIdOrThrow(id: string) {
-    const promotion = await this.prisma.promotion.findUnique({ where: { id } });
+  async findByIdOrThrow(companyId: string, id: string) {
+    const promotion = await this.prisma.promotion.findFirst({ where: { id, companyId } });
     if (!promotion) throw new NotFoundException('Promoção não encontrada');
     return promotion;
   }
 
-  create(dto: CreatePromotionDto) {
-    return this.prisma.promotion.create({ data: { ...dto, active: dto.active ?? true } });
+  create(companyId: string, dto: CreatePromotionDto) {
+    return this.prisma.promotion.create({ data: { ...dto, companyId, active: dto.active ?? true } });
   }
 
-  async update(id: string, dto: UpdatePromotionDto) {
-    await this.findByIdOrThrow(id);
+  async update(companyId: string, id: string, dto: UpdatePromotionDto) {
+    await this.findByIdOrThrow(companyId, id);
     return this.prisma.promotion.update({ where: { id }, data: dto });
   }
 
-  async remove(id: string) {
-    await this.findByIdOrThrow(id);
+  async remove(companyId: string, id: string) {
+    await this.findByIdOrThrow(companyId, id);
     await this.prisma.promotion.update({ where: { id }, data: { active: false } });
   }
 
-  // Roda todo dia às 9h. Avalia as promoções baseadas em tempo
-  // (aniversário, cliente inativo) e notifica quem se encaixa. A
-  // promoção por valor mínimo do pedido é reativa (checada na hora que
-  // o pedido é criado, em OrdersService), não por aqui.
+  // Disparo manual (endpoint de admin) — avalia só a empresa que pediu.
+  runNow(companyId: string) {
+    return this.runForCompany(companyId);
+  }
+
+  // Roda todo dia às 9h, para TODAS as empresas ativas. Avalia as
+  // promoções baseadas em tempo (aniversário, cliente inativo) e
+  // notifica quem se encaixa. A promoção por valor mínimo do pedido é
+  // reativa (checada na hora que o pedido é criado, em OrdersService),
+  // não por aqui.
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async runScheduledPromotions() {
-    const promotions = await this.prisma.promotion.findMany({ where: { active: true }, include: { coupon: true } });
+    const companies = await this.prisma.company.findMany({ where: { active: true } });
+    for (const company of companies) {
+      await this.runForCompany(company.id);
+    }
+  }
+
+  private async runForCompany(companyId: string) {
+    const promotions = await this.prisma.promotion.findMany({
+      where: { active: true, companyId },
+      include: { coupon: true },
+    });
 
     for (const promotion of promotions) {
       if (promotion.type === PromotionType.BIRTHDAY) {
-        await this.notifyBirthdays(promotion.coupon?.code);
+        await this.notifyBirthdays(companyId, promotion.coupon?.code);
       } else if (promotion.type === PromotionType.INACTIVE_CUSTOMER) {
         const ruleConfig = promotion.ruleConfig as Record<string, number> | null;
         const days = Number(ruleConfig?.days ?? 30);
-        await this.notifyInactiveCustomers(days, promotion.coupon?.code);
+        await this.notifyInactiveCustomers(companyId, days, promotion.coupon?.code);
       }
     }
   }
 
-  private async notifyBirthdays(couponCode?: string) {
+  private async notifyBirthdays(companyId: string, couponCode?: string) {
     const today = new Date();
     const customers = await this.prisma.customer.findMany({
-      where: { birthDate: { not: null } },
+      where: { birthDate: { not: null }, membership: { companyId } },
     });
 
     const birthdayToday = customers.filter((c) => {
@@ -88,10 +104,10 @@ export class PromotionsService {
     this.logger.log(`Promoção de aniversário: ${birthdayToday.length} cliente(s) verificado(s) hoje`);
   }
 
-  private async notifyInactiveCustomers(days: number, couponCode?: string) {
+  private async notifyInactiveCustomers(companyId: string, days: number, couponCode?: string) {
     const threshold = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const inactiveCustomers = await this.prisma.customer.findMany({
-      where: { lastOrderAt: { lt: threshold } },
+      where: { lastOrderAt: { lt: threshold }, membership: { companyId } },
     });
 
     for (const customer of inactiveCustomers) {

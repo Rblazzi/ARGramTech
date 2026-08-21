@@ -93,7 +93,7 @@ export class LoyaltyService {
     });
   }
 
-  async redeem(customerId: string, dto: RedeemPointsDto) {
+  async redeem(customerId: string, companyId: string, dto: RedeemPointsDto) {
     const customer = await this.prisma.customer.findUniqueOrThrow({ where: { id: customerId } });
     if (customer.loyaltyPoints < dto.points) {
       throw new BadRequestException('Você não tem pontos suficientes');
@@ -118,6 +118,7 @@ export class LoyaltyService {
       this.prisma.customer.update({ where: { id: customerId }, data: { loyaltyPoints: { decrement: dto.points } } }),
       this.prisma.coupon.create({
         data: {
+          companyId,
           code,
           type: CouponType.FIXED,
           value: discountValue,

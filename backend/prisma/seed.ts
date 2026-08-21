@@ -3,8 +3,8 @@ import { CouponType, PrismaClient, UserRole } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 
 // Popula dados mínimos para começar a desenvolver/testar:
-// - configurações padrão da loja
-// - um usuário administrador (login: admin@lanchonete.local / admin123456)
+// - a empresa padrão (Lanchonete Delivery)
+// - uma conta de teste por setor (role), vinculada a ela
 // - categorias básicas do cardápio
 async function main() {
   const prisma = new PrismaClient();
@@ -13,19 +13,20 @@ async function main() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  console.log('Criando configurações padrão da loja...');
-  const existingSettings = await prisma.storeSettings.findFirst();
-  if (!existingSettings) {
-    await prisma.storeSettings.create({
-      data: {
-        name: 'Lanchonete Delivery',
-        primaryColor: '#FF7A00',
-        deliveryFeeDefault: 5,
-        minOrderValue: 0,
-        status: 'OPEN',
-      },
-    });
-  }
+  console.log('Criando empresa padrão...');
+  const company = await prisma.company.upsert({
+    where: { slug: 'lanchonete-delivery' },
+    create: {
+      slug: 'lanchonete-delivery',
+      customDomain: 'argramtech.com.br',
+      name: 'Lanchonete Delivery',
+      primaryColor: '#FF7A00',
+      deliveryFeeDefault: 5,
+      minOrderValue: 0,
+      status: 'OPEN',
+    },
+    update: {},
+  });
 
   const { data: listUsersData, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
   if (listUsersError) throw listUsersError;
@@ -50,16 +51,23 @@ async function main() {
     }
     await prisma.user.upsert({
       where: { id: authId },
-      create: { id: authId, email, name, role },
+      create: { id: authId, email, name },
+      update: { email, name },
+    });
+
+    const membership = await prisma.companyMembership.upsert({
+      where: { userId_companyId: { userId: authId, companyId: company.id } },
+      create: { userId: authId, companyId: company.id, role },
       update: { role },
     });
-    return authId;
+    return membership.id;
   }
 
   // Uma conta de teste por setor (role) do sistema, para permitir testar
   // cada painel/acesso separadamente. DRIVER também precisa de uma linha
-  // em delivery_drivers (a FK usa o mesmo id do user); CUSTOMER também
-  // precisa de uma linha em customers — os demais setores usam só User.
+  // em delivery_drivers (a FK usa o id da membership); CUSTOMER também
+  // precisa de uma linha em customers — os demais setores usam só a
+  // membership.
   const staffAccounts = [
     { email: 'admin@lanchonete.local', password: 'admin123456', name: 'Administrador', role: UserRole.ADMIN },
     { email: 'gerente@lanchonete.local', password: 'gerente123456', name: 'Gerente', role: UserRole.MANAGER },
@@ -71,19 +79,19 @@ async function main() {
 
   for (const account of staffAccounts) {
     console.log(`Criando usuário ${account.role}...`);
-    const authId = await upsertStaffUser(account.email, account.password, account.name, account.role);
+    const membershipId = await upsertStaffUser(account.email, account.password, account.name, account.role);
 
     if (account.role === UserRole.DRIVER) {
       await prisma.deliveryDriver.upsert({
-        where: { id: authId },
-        create: { id: authId },
+        where: { id: membershipId },
+        create: { id: membershipId },
         update: {},
       });
     }
     if (account.role === UserRole.CUSTOMER) {
       await prisma.customer.upsert({
-        where: { id: authId },
-        create: { id: authId },
+        where: { id: membershipId },
+        create: { id: membershipId },
         update: {},
       });
     }
@@ -99,16 +107,17 @@ async function main() {
       .replace(/\s+/g, '-');
 
     await prisma.category.upsert({
-      where: { slug },
-      create: { name, slug, position: index },
+      where: { companyId_slug: { companyId: company.id, slug } },
+      create: { companyId: company.id, name, slug, position: index },
       update: {},
     });
   }
 
   console.log('Criando cupom de exemplo...');
   await prisma.coupon.upsert({
-    where: { code: 'PRIMEIRACOMPRA' },
+    where: { companyId_code: { companyId: company.id, code: 'PRIMEIRACOMPRA' } },
     create: {
+      companyId: company.id,
       code: 'PRIMEIRACOMPRA',
       type: CouponType.PERCENTAGE,
       value: 10,

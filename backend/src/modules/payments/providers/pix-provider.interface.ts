@@ -10,7 +10,7 @@ export interface PixCharge {
 }
 
 export interface PixProvider {
-  createCharge(params: { amount: number; txid: string }): Promise<PixCharge>;
+  createCharge(params: { companyId: string; amount: number; txid: string }): Promise<PixCharge>;
 }
 
 export const PIX_PROVIDER = Symbol('PIX_PROVIDER');

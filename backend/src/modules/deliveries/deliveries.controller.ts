@@ -16,49 +16,49 @@ export class DeliveriesController {
 
   @Roles(UserRole.DRIVER)
   @Get('available')
-  findAvailable() {
-    return this.deliveriesService.findAvailable();
+  findAvailable(@CurrentUser() user: AuthenticatedUser) {
+    return this.deliveriesService.findAvailable(user.companyId);
   }
 
   @Roles(UserRole.DRIVER)
   @Get('mine')
   findMine(@CurrentUser() user: AuthenticatedUser) {
-    return this.deliveriesService.findMine(user.id);
+    return this.deliveriesService.findMine(user.membershipId);
   }
 
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @Get('admin')
-  findAllForAdmin() {
-    return this.deliveriesService.findAllForAdmin();
+  findAllForAdmin(@CurrentUser() user: AuthenticatedUser) {
+    return this.deliveriesService.findAllForAdmin(user.companyId);
   }
 
   @Roles(UserRole.DRIVER)
   @Post(':id/accept')
   accept(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.deliveriesService.accept(user.id, id);
+    return this.deliveriesService.accept(user.companyId, user.membershipId, user.id, id);
   }
 
   @Roles(UserRole.DRIVER)
   @Post(':id/picked-up')
   markPickedUp(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.deliveriesService.markPickedUp(user.id, id);
+    return this.deliveriesService.markPickedUp(user.companyId, user.membershipId, id);
   }
 
   @Roles(UserRole.DRIVER)
   @Post(':id/delivered')
   markDelivered(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.deliveriesService.markDelivered(user.id, id);
+    return this.deliveriesService.markDelivered(user.companyId, user.membershipId, user.id, id);
   }
 
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @Post(':id/assign')
   assign(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: AssignDeliveryDto) {
-    return this.deliveriesService.assignManually(user.id, id, dto.driverId);
+    return this.deliveriesService.assignManually(user.companyId, user.id, id, dto.driverId);
   }
 
   @Roles(UserRole.CUSTOMER)
   @Post(':id/rate')
   rate(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: RateDeliveryDto) {
-    return this.deliveriesService.rate(user.id, id, dto);
+    return this.deliveriesService.rate(user.companyId, user.membershipId, id, dto);
   }
 }

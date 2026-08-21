@@ -15,6 +15,6 @@ export class NotificationsController {
 
   @Get('me')
   findMine(@CurrentUser() user: AuthenticatedUser) {
-    return this.notificationsService.findForCustomer(user.id);
+    return this.notificationsService.findForCustomer(user.membershipId);
   }
 }

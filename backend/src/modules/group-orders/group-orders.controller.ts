@@ -19,22 +19,22 @@ export class GroupOrdersController {
 
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateGroupOrderDto) {
-    return this.groupOrdersService.create(user.id, dto);
+    return this.groupOrdersService.create(user.companyId, user.membershipId, dto);
   }
 
   @Get(':code')
-  getView(@Param('code') code: string) {
-    return this.groupOrdersService.getView(code);
+  getView(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string) {
+    return this.groupOrdersService.getView(user.companyId, code);
   }
 
   @Post(':code/join')
   join(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string) {
-    return this.groupOrdersService.join(code, user.id);
+    return this.groupOrdersService.join(user.companyId, code, user.membershipId);
   }
 
   @Post(':code/items')
   addItem(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string, @Body() dto: AddGroupItemDto) {
-    return this.groupOrdersService.addItem(code, user.id, dto);
+    return this.groupOrdersService.addItem(user.companyId, code, user.membershipId, dto);
   }
 
   @Patch(':code/items/:itemId')
@@ -44,32 +44,32 @@ export class GroupOrdersController {
     @Param('itemId') itemId: string,
     @Body() dto: UpdateGroupItemDto,
   ) {
-    return this.groupOrdersService.updateItem(code, user.id, itemId, dto);
+    return this.groupOrdersService.updateItem(user.companyId, code, user.membershipId, itemId, dto);
   }
 
   @Delete(':code/items/:itemId')
   removeItem(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string, @Param('itemId') itemId: string) {
-    return this.groupOrdersService.removeItem(code, user.id, itemId);
+    return this.groupOrdersService.removeItem(user.companyId, code, user.membershipId, itemId);
   }
 
   @Post(':code/lock')
   lock(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string, @Body() dto: LockGroupOrderDto) {
-    return this.groupOrdersService.lock(code, user.id, dto);
+    return this.groupOrdersService.lock(user.companyId, code, user.membershipId, dto);
   }
 
   @Post(':code/splits/:splitId/pay')
   paySplit(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string, @Param('splitId') splitId: string) {
-    return this.groupOrdersService.paySplit(code, user.id, splitId);
+    return this.groupOrdersService.paySplit(user.companyId, code, user.membershipId, splitId);
   }
 
   @Post(':code/cancel')
   cancel(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string) {
-    return this.groupOrdersService.cancel(code, user.id);
+    return this.groupOrdersService.cancel(user.companyId, code, user.membershipId);
   }
 
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @Post(':code/release')
   release(@CurrentUser() user: AuthenticatedUser, @Param('code') code: string) {
-    return this.groupOrdersService.releaseManually(code, user.id);
+    return this.groupOrdersService.releaseManually(user.companyId, code, user.id);
   }
 }

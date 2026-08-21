@@ -11,7 +11,9 @@ import { LockGroupOrderDto } from './dto/lock-group-order.dto';
 
 const GROUP_INCLUDE = {
   members: {
-    include: { customer: { include: { user: { select: { name: true } } } } },
+    include: {
+      customer: { include: { membership: { include: { user: { select: { name: true } } } } } },
+    },
     orderBy: { joinedAt: Prisma.SortOrder.asc },
   },
   order: {
@@ -46,13 +48,15 @@ export class GroupOrdersService {
     private readonly deliveryZonesService: DeliveryZonesService,
   ) {}
 
-  async create(customerId: string, dto: CreateGroupOrderDto) {
-    const code = await this.generateUniqueCode();
+  async create(companyId: string, customerId: string, dto: CreateGroupOrderDto) {
+    const code = await this.generateUniqueCode(companyId);
     const paymentMode = dto.paymentMode ?? PaymentMode.SPLIT_BY_CONSUMPTION;
     const deliveryFeeSplitMode = dto.deliveryFeeSplitMode ?? 'EQUAL';
+    const orderNumber = await this.nextOrderNumber(companyId);
 
     await this.prisma.groupOrder.create({
       data: {
+        companyId,
         code,
         ownerCustomerId: customerId,
         paymentMode,
@@ -60,6 +64,8 @@ export class GroupOrdersService {
         members: { create: { customerId, role: 'OWNER' } },
         order: {
           create: {
+            companyId,
+            orderNumber,
             customerId,
             type: OrderType.PICKUP, // provisório — definido de verdade no lock()
             status: OrderStatus.RECEIVED,
@@ -73,16 +79,16 @@ export class GroupOrdersService {
       },
     });
 
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async getView(code: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async getView(companyId: string, code: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     return this.buildView(group);
   }
 
-  async join(code: string, customerId: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async join(companyId: string, code: string, customerId: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     if (group.status !== GroupOrderStatus.OPEN) {
       throw new BadRequestException('Este pedido em grupo não está mais aberto para novos participantes');
     }
@@ -94,16 +100,16 @@ export class GroupOrdersService {
       });
     }
 
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async addItem(code: string, customerId: string, dto: AddGroupItemDto) {
-    const group = await this.findByCodeOrThrow(code);
+  async addItem(companyId: string, code: string, customerId: string, dto: AddGroupItemDto) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     this.assertOpen(group);
     const member = this.findMemberOrThrow(group, customerId);
 
     const product = await this.prisma.product.findFirst({
-      where: { id: dto.productId, active: true, deletedAt: null },
+      where: { id: dto.productId, companyId, active: true, deletedAt: null },
       include: { optionGroups: { include: { items: true } } },
     });
     if (!product) throw new NotFoundException('Produto não encontrado ou indisponível');
@@ -129,16 +135,16 @@ export class GroupOrdersService {
     });
 
     await this.recomputeOrderTotals(group.order.id);
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async updateItem(code: string, customerId: string, itemId: string, dto: UpdateGroupItemDto) {
-    const group = await this.findByCodeOrThrow(code);
+  async updateItem(companyId: string, code: string, customerId: string, itemId: string, dto: UpdateGroupItemDto) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     this.assertOpen(group);
     const item = this.findOwnedItemOrThrow(group, customerId, itemId);
 
     const product = await this.prisma.product.findFirst({
-      where: { id: item.productId, active: true, deletedAt: null },
+      where: { id: item.productId, companyId, active: true, deletedAt: null },
       include: { optionGroups: { include: { items: true } } },
     });
     if (!product) throw new NotFoundException('Produto não encontrado ou indisponível');
@@ -170,21 +176,21 @@ export class GroupOrdersService {
     });
 
     await this.recomputeOrderTotals(group.order.id);
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async removeItem(code: string, customerId: string, itemId: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async removeItem(companyId: string, code: string, customerId: string, itemId: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     this.assertOpen(group);
     this.findOwnedItemOrThrow(group, customerId, itemId);
 
     await this.prisma.orderItem.delete({ where: { id: itemId } });
     await this.recomputeOrderTotals(group.order.id);
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async lock(code: string, customerId: string, dto: LockGroupOrderDto) {
-    const group = await this.findByCodeOrThrow(code);
+  async lock(companyId: string, code: string, customerId: string, dto: LockGroupOrderDto) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     if (group.ownerCustomerId !== customerId) {
       throw new ForbiddenException('Só quem criou o pedido em grupo pode fechá-lo');
     }
@@ -202,7 +208,12 @@ export class GroupOrdersService {
     }
 
     const itemsSubtotal = round2(group.order.items.reduce((sum, item) => sum + Number(item.subtotal), 0));
-    const deliveryFee = await this.deliveryZonesService.calculateFee({ type: dto.type, address, subtotal: itemsSubtotal });
+    const deliveryFee = await this.deliveryZonesService.calculateFee({
+      companyId,
+      type: dto.type,
+      address,
+      subtotal: itemsSubtotal,
+    });
     const total = round2(itemsSubtotal + deliveryFee);
 
     const splits = this.computeSplits(group, itemsSubtotal, deliveryFee, dto);
@@ -235,11 +246,11 @@ export class GroupOrdersService {
     });
 
     await this.maybeAutoConfirm(group.id);
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async paySplit(code: string, customerId: string, splitId: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async paySplit(companyId: string, code: string, customerId: string, splitId: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     if (group.status !== GroupOrderStatus.LOCKED) {
       throw new BadRequestException('Este pedido em grupo ainda não foi fechado para pagamento');
     }
@@ -249,7 +260,7 @@ export class GroupOrdersService {
     if (split.customerId !== customerId) {
       throw new ForbiddenException('Você só pode confirmar o pagamento da sua própria parte');
     }
-    if (split.status === SplitStatus.PAID) return this.getView(code);
+    if (split.status === SplitStatus.PAID) return this.getView(companyId, code);
 
     // Simula a confirmação de pagamento (autorrelato). A integração real
     // com gateway/PIX entra no módulo de pagamentos.
@@ -259,11 +270,11 @@ export class GroupOrdersService {
     });
 
     await this.maybeAutoConfirm(group.id);
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async releaseManually(code: string, staffUserId: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async releaseManually(companyId: string, code: string, staffUserId: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     if (group.status !== GroupOrderStatus.LOCKED) {
       throw new BadRequestException('Este pedido em grupo não está aguardando liberação');
     }
@@ -285,11 +296,11 @@ export class GroupOrdersService {
       }),
     ]);
 
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
-  async cancel(code: string, customerId: string) {
-    const group = await this.findByCodeOrThrow(code);
+  async cancel(companyId: string, code: string, customerId: string) {
+    const group = await this.findByCodeOrThrow(companyId, code);
     if (group.ownerCustomerId !== customerId) {
       throw new ForbiddenException('Só quem criou o pedido em grupo pode cancelá-lo');
     }
@@ -305,23 +316,35 @@ export class GroupOrdersService {
       }),
     ]);
 
-    return this.getView(code);
+    return this.getView(companyId, code);
   }
 
   // ------------------------------------------------------------------
 
-  private async generateUniqueCode(): Promise<string> {
+  // UPDATE...RETURNING é atômico por linha no Postgres — mesmo padrão de
+  // OrdersService, aqui fora de uma transaction porque o create() do
+  // grupo já é uma única chamada (não precisa envolver mais nada).
+  private async nextOrderNumber(companyId: string): Promise<number> {
+    const [{ last_order_number }] = await this.prisma.$queryRaw<{ last_order_number: number }[]>`
+      UPDATE companies SET last_order_number = last_order_number + 1
+      WHERE id = ${companyId}::uuid
+      RETURNING last_order_number
+    `;
+    return last_order_number;
+  }
+
+  private async generateUniqueCode(companyId: string): Promise<string> {
     for (let attempt = 0; attempt < 10; attempt++) {
       const code = Array.from({ length: 6 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
-      const existing = await this.prisma.groupOrder.findUnique({ where: { code } });
+      const existing = await this.prisma.groupOrder.findUnique({ where: { companyId_code: { companyId, code } } });
       if (!existing) return code;
     }
     throw new Error('Não foi possível gerar um código único para o pedido em grupo');
   }
 
-  private async findByCodeOrThrow(code: string): Promise<GroupWithRelations> {
+  private async findByCodeOrThrow(companyId: string, code: string): Promise<GroupWithRelations> {
     const group = await this.prisma.groupOrder.findUnique({
-      where: { code: code.toUpperCase() },
+      where: { companyId_code: { companyId, code: code.toUpperCase() } },
       include: GROUP_INCLUDE,
     });
     if (!group) throw new NotFoundException('Pedido em grupo não encontrado');
@@ -458,7 +481,7 @@ export class GroupOrdersService {
   }
 
   private memberName(member: GroupWithRelations['members'][number]) {
-    return member.customer?.user.name ?? member.guestName ?? 'Convidado';
+    return member.customer?.membership.user.name ?? member.guestName ?? 'Convidado';
   }
 
   private buildView(group: GroupWithRelations) {

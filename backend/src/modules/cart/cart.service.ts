@@ -101,7 +101,7 @@ export class CartService {
     return this.getSummary(customerId);
   }
 
-  async applyCoupon(customerId: string, code: string) {
+  async applyCoupon(customerId: string, companyId: string, code: string) {
     const cart = await this.getOrCreateOpenCart(customerId);
     const cartWithItems = await this.prisma.cart.findUniqueOrThrow({
       where: { id: cart.id },
@@ -112,7 +112,9 @@ export class CartService {
       throw new BadRequestException('Adicione itens ao carrinho antes de aplicar um cupom');
     }
 
-    const coupon = await this.prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { companyId_code: { companyId, code: code.toUpperCase() } },
+    });
     if (!coupon || !coupon.active) {
       throw new BadRequestException('Cupom inválido');
     }

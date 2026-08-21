@@ -8,8 +8,9 @@ const PIX_EXPIRATION_MINUTES = 30;
 
 // Provedor de demonstração: NÃO se conecta a nenhum banco. Gera um
 // payload "Pix Copia e Cola" real (formato EMVCo/Bacen) a partir da
-// chave PIX cadastrada em StoreSettings — se essa chave for uma chave
-// PIX de verdade, o código gerado é válido e pode ser escaneado. A
+// chave PIX cadastrada na empresa (Company.pixKey) — se essa chave for
+// uma chave PIX de verdade, o código gerado é válido e pode ser
+// escaneado. A
 // "confirmação de pagamento" aqui é sempre manual (endpoint de
 // simulação ou webhook) porque não há banco de verdade do outro lado.
 //
@@ -20,10 +21,10 @@ const PIX_EXPIRATION_MINUTES = 30;
 export class FakePixProvider implements PixProvider {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createCharge({ amount, txid }: { amount: number; txid: string }): Promise<PixCharge> {
-    const settings = await this.prisma.storeSettings.findFirst();
-    const pixKey = settings?.pixKey || 'chave-demo@lanchonetedelivery.com.br';
-    const merchantName = settings?.name || 'Lanchonete Delivery';
+  async createCharge({ companyId, amount, txid }: { companyId: string; amount: number; txid: string }): Promise<PixCharge> {
+    const company = await this.prisma.company.findUnique({ where: { id: companyId } });
+    const pixKey = company?.pixKey || 'chave-demo@lanchonetedelivery.com.br';
+    const merchantName = company?.name || 'Lanchonete Delivery';
 
     const copyPaste = buildPixCopyPaste({
       pixKey,

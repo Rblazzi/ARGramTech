@@ -11,8 +11,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   // Conexão direta (sem pgbouncer) usada apenas por migrations.
   directUrl = env("DIRECT_URL")
 }
@@ -174,38 +174,57 @@ enum CartStatus {
 // USUÁRIOS E PERFIS
 // ------------------------------------------------------------------
 
-// id == id do usuário no Supabase Auth (GoTrue). Mantemos uma cópia
-// local para poder relacionar com todo o resto do banco (FKs) e para
-// controlar roles/permissões independente do Supabase.
+// id == id do usuário no Supabase Auth (GoTrue). É só identidade global
+// (login), compartilhada entre todas as empresas da plataforma — o
+// papel/role de cada pessoa é por empresa, ver CompanyMembership.
 model User {
   id        String    @id @db.Uuid
   email     String    @unique
   phone     String?
   name      String
-  role      UserRole  @default(CUSTOMER)
   active    Boolean   @default(true)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  customer         Customer?
-  deliveryDriver   DeliveryDriver?
-  statusChanges    OrderStatusHistory[]
-  auditLogs        AuditLog[]
+  memberships   CompanyMembership[]
+  statusChanges OrderStatusHistory[]
+  auditLogs     AuditLog[]
 
   @@map("users")
 }
 
+// Vínculo de uma pessoa (User) com uma empresa (Company): define o
+// papel dela NAQUELA empresa. Uma mesma pessoa pode ter memberships em
+// várias empresas (ex.: cliente de vários restaurantes na plataforma).
+model CompanyMembership {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String   @map("company_id") @db.Uuid
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role      UserRole @default(CUSTOMER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customer       Customer?
+  deliveryDriver DeliveryDriver?
+
+  @@unique([userId, companyId])
+  @@map("company_memberships")
+}
+
 model Customer {
-  id            String      @id @db.Uuid
-  user          User        @relation(fields: [id], references: [id], onDelete: Cascade)
-  birthDate     DateTime?   @map("birth_date")
-  loyaltyPoints Int         @default(0) @map("loyalty_points_balance")
-  loyaltyTier   LoyaltyTier @default(BRONZE) @map("loyalty_tier")
-  lastOrderAt   DateTime?   @map("last_order_at")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-  deletedAt     DateTime?   @map("deleted_at")
+  id            String            @id @db.Uuid
+  membership    CompanyMembership @relation(fields: [id], references: [id], onDelete: Cascade)
+  birthDate     DateTime?         @map("birth_date")
+  loyaltyPoints Int               @default(0) @map("loyalty_points_balance")
+  loyaltyTier   LoyaltyTier       @default(BRONZE) @map("loyalty_tier")
+  lastOrderAt   DateTime?         @map("last_order_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  deletedAt     DateTime?         @map("deleted_at")
 
   addresses             Address[]
   carts                 Cart[]
@@ -250,8 +269,10 @@ model Address {
 
 model Category {
   id          String    @id @default(uuid()) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
-  slug        String    @unique
+  slug        String
   description String?
   imageUrl    String?   @map("image_url")
   position    Int       @default(0)
@@ -262,11 +283,14 @@ model Category {
 
   products Product[]
 
+  @@unique([companyId, slug])
   @@map("categories")
 }
 
 model Product {
   id              String    @id @default(uuid()) @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   categoryId      String    @map("category_id") @db.Uuid
   category        Category  @relation(fields: [categoryId], references: [id])
   name            String
@@ -275,7 +299,7 @@ model Product {
   price           Decimal   @db.Decimal(10, 2)
   active          Boolean   @default(true)
   prepTimeMinutes Int       @default(15) @map("prep_time_minutes")
-  internalCode    String    @unique @map("internal_code")
+  internalCode    String    @map("internal_code")
   position        Int       @default(0)
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -286,6 +310,7 @@ model Product {
   orderItems     OrderItem[]
   couponProducts CouponProduct[]
 
+  @@unique([companyId, internalCode])
   @@map("products")
 }
 
@@ -310,13 +335,13 @@ model ProductOptionGroup {
 }
 
 model ProductOptionItem {
-  id         String              @id @default(uuid()) @db.Uuid
-  groupId    String              @map("group_id") @db.Uuid
-  group      ProductOptionGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  id         String             @id @default(uuid()) @db.Uuid
+  groupId    String             @map("group_id") @db.Uuid
+  group      ProductOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name       String
-  priceDelta Decimal             @default(0) @map("price_delta") @db.Decimal(10, 2)
-  active     Boolean             @default(true)
-  position   Int                 @default(0)
+  priceDelta Decimal            @default(0) @map("price_delta") @db.Decimal(10, 2)
+  active     Boolean            @default(true)
+  position   Int                @default(0)
 
   cartItemOptions  CartItemOption[]
   orderItemOptions OrderItemOption[]
@@ -362,11 +387,11 @@ model CartItem {
 }
 
 model CartItemOption {
-  id           String             @id @default(uuid()) @db.Uuid
-  cartItemId   String             @map("cart_item_id") @db.Uuid
-  cartItem     CartItem           @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
-  optionItemId String             @map("option_item_id") @db.Uuid
-  optionItem   ProductOptionItem  @relation(fields: [optionItemId], references: [id])
+  id           String            @id @default(uuid()) @db.Uuid
+  cartItemId   String            @map("cart_item_id") @db.Uuid
+  cartItem     CartItem          @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  optionItemId String            @map("option_item_id") @db.Uuid
+  optionItem   ProductOptionItem @relation(fields: [optionItemId], references: [id])
 
   @@map("cart_item_options")
 }
@@ -376,24 +401,26 @@ model CartItemOption {
 // ------------------------------------------------------------------
 
 model Order {
-  id            String      @id @default(uuid()) @db.Uuid
-  orderNumber   Int         @unique @default(autoincrement()) @map("order_number")
-  customerId    String      @map("customer_id") @db.Uuid
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  type          OrderType
-  status        OrderStatus @default(RECEIVED)
-  paymentMode   PaymentMode @default(SINGLE) @map("payment_mode")
-  addressId     String?     @map("address_id") @db.Uuid
-  address       Address?    @relation(fields: [addressId], references: [id])
-  groupOrderId  String?     @unique @map("group_order_id") @db.Uuid
-  groupOrder    GroupOrder? @relation(fields: [groupOrderId], references: [id])
-  couponId      String?     @map("coupon_id") @db.Uuid
-  coupon        Coupon?     @relation(fields: [couponId], references: [id])
+  id           String      @id @default(uuid()) @db.Uuid
+  companyId    String      @map("company_id") @db.Uuid
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderNumber  Int         @map("order_number")
+  customerId   String      @map("customer_id") @db.Uuid
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  type         OrderType
+  status       OrderStatus @default(RECEIVED)
+  paymentMode  PaymentMode @default(SINGLE) @map("payment_mode")
+  addressId    String?     @map("address_id") @db.Uuid
+  address      Address?    @relation(fields: [addressId], references: [id])
+  groupOrderId String?     @unique @map("group_order_id") @db.Uuid
+  groupOrder   GroupOrder? @relation(fields: [groupOrderId], references: [id])
+  couponId     String?     @map("coupon_id") @db.Uuid
+  coupon       Coupon?     @relation(fields: [couponId], references: [id])
 
-  subtotal    Decimal  @db.Decimal(10, 2)
-  deliveryFee Decimal  @default(0) @map("delivery_fee") @db.Decimal(10, 2)
-  discount    Decimal  @default(0) @db.Decimal(10, 2)
-  total       Decimal  @db.Decimal(10, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+  deliveryFee Decimal @default(0) @map("delivery_fee") @db.Decimal(10, 2)
+  discount    Decimal @default(0) @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
   notes       String?
 
   releasedToKitchenManually Boolean @default(false) @map("released_to_kitchen_manually")
@@ -415,6 +442,7 @@ model Order {
   couponUsage   CouponUsage?
   loyaltyTxs    LoyaltyTransaction[]
 
+  @@unique([companyId, orderNumber])
   @@map("orders")
 }
 
@@ -438,26 +466,26 @@ model OrderItem {
 }
 
 model OrderItemOption {
-  id           String            @id @default(uuid()) @db.Uuid
-  orderItemId  String            @map("order_item_id") @db.Uuid
-  orderItem    OrderItem         @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  optionItemId String            @map("option_item_id") @db.Uuid
-  optionItem   ProductOptionItem @relation(fields: [optionItemId], references: [id])
-  nameSnapshot String            @map("name_snapshot")
-  priceDeltaSnapshot Decimal     @map("price_delta_snapshot") @db.Decimal(10, 2)
+  id                 String            @id @default(uuid()) @db.Uuid
+  orderItemId        String            @map("order_item_id") @db.Uuid
+  orderItem          OrderItem         @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  optionItemId       String            @map("option_item_id") @db.Uuid
+  optionItem         ProductOptionItem @relation(fields: [optionItemId], references: [id])
+  nameSnapshot       String            @map("name_snapshot")
+  priceDeltaSnapshot Decimal           @map("price_delta_snapshot") @db.Decimal(10, 2)
 
   @@map("order_item_options")
 }
 
 model OrderStatusHistory {
-  id            String      @id @default(uuid()) @db.Uuid
-  orderId       String      @map("order_id") @db.Uuid
-  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status        OrderStatus
-  changedByUserId String?   @map("changed_by_user_id") @db.Uuid
-  changedByUser User?       @relation(fields: [changedByUserId], references: [id])
-  note          String?
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id              String      @id @default(uuid()) @db.Uuid
+  orderId         String      @map("order_id") @db.Uuid
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          OrderStatus
+  changedByUserId String?     @map("changed_by_user_id") @db.Uuid
+  changedByUser   User?       @relation(fields: [changedByUserId], references: [id])
+  note            String?
+  createdAt       DateTime    @default(now()) @map("created_at")
 
   @@map("order_status_history")
 }
@@ -468,7 +496,9 @@ model OrderStatusHistory {
 
 model GroupOrder {
   id                   String               @id @default(uuid()) @db.Uuid
-  code                 String               @unique
+  companyId            String               @map("company_id") @db.Uuid
+  company              Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code                 String
   ownerCustomerId      String               @map("owner_customer_id") @db.Uuid
   ownerCustomer        Customer             @relation("GroupOrderOwner", fields: [ownerCustomerId], references: [id])
   status               GroupOrderStatus     @default(OPEN)
@@ -481,6 +511,7 @@ model GroupOrder {
   members GroupOrderMember[]
   order   Order?
 
+  @@unique([companyId, code])
   @@map("group_orders")
 }
 
@@ -552,6 +583,8 @@ model PaymentSplit {
 
 model DeliveryZone {
   id                   String           @id @default(uuid()) @db.Uuid
+  companyId            String           @map("company_id") @db.Uuid
+  company              Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   type                 DeliveryZoneType
   name                 String // nome do bairro, ou "Taxa fixa" / "Frete grátis"
   fee                  Decimal          @default(0) @db.Decimal(10, 2)
@@ -566,14 +599,14 @@ model DeliveryZone {
 }
 
 model DeliveryDriver {
-  id            String   @id @db.Uuid
-  user          User     @relation(fields: [id], references: [id], onDelete: Cascade)
-  vehicleType   String?  @map("vehicle_type") // moto, bike, carro
-  vehiclePlate  String?  @map("vehicle_plate")
-  active        Boolean  @default(true)
-  ratingAverage Decimal  @default(0) @map("rating_average") @db.Decimal(3, 2)
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id            String            @id @db.Uuid
+  membership    CompanyMembership @relation(fields: [id], references: [id], onDelete: Cascade)
+  vehicleType   String?           @map("vehicle_type") // moto, bike, carro
+  vehiclePlate  String?           @map("vehicle_plate")
+  active        Boolean           @default(true)
+  ratingAverage Decimal           @default(0) @map("rating_average") @db.Decimal(3, 2)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   deliveries Delivery[]
 
@@ -581,19 +614,21 @@ model DeliveryDriver {
 }
 
 model Delivery {
-  id            String         @id @default(uuid()) @db.Uuid
-  orderId       String         @unique @map("order_id") @db.Uuid
-  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  driverId      String?        @map("driver_id") @db.Uuid
-  driver        DeliveryDriver? @relation(fields: [driverId], references: [id])
-  status        DeliveryStatus @default(AWAITING_DRIVER)
-  assignedAt    DateTime?      @map("assigned_at")
-  pickedUpAt    DateTime?      @map("picked_up_at")
-  inRouteAt     DateTime?      @map("in_route_at")
-  deliveredAt   DateTime?      @map("delivered_at")
-  customerRating Int?          @map("customer_rating")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  id             String          @id @default(uuid()) @db.Uuid
+  companyId      String          @map("company_id") @db.Uuid
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderId        String          @unique @map("order_id") @db.Uuid
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driverId       String?         @map("driver_id") @db.Uuid
+  driver         DeliveryDriver? @relation(fields: [driverId], references: [id])
+  status         DeliveryStatus  @default(AWAITING_DRIVER)
+  assignedAt     DateTime?       @map("assigned_at")
+  pickedUpAt     DateTime?       @map("picked_up_at")
+  inRouteAt      DateTime?       @map("in_route_at")
+  deliveredAt    DateTime?       @map("delivered_at")
+  customerRating Int?            @map("customer_rating")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@map("deliveries")
 }
@@ -604,7 +639,9 @@ model Delivery {
 
 model Coupon {
   id                    String     @id @default(uuid()) @db.Uuid
-  code                  String     @unique
+  companyId             String     @map("company_id") @db.Uuid
+  company               Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code                  String
   type                  CouponType
   value                 Decimal    @db.Decimal(10, 2)
   minOrderValue         Decimal?   @map("min_order_value") @db.Decimal(10, 2)
@@ -622,6 +659,7 @@ model Coupon {
   orders             Order[]
   promotions         Promotion[]
 
+  @@unique([companyId, code])
   @@map("coupons")
 }
 
@@ -650,6 +688,8 @@ model CouponUsage {
 
 model Promotion {
   id         String        @id @default(uuid()) @db.Uuid
+  companyId  String        @map("company_id") @db.Uuid
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name       String
   type       PromotionType
   ruleConfig Json          @map("rule_config")
@@ -688,6 +728,8 @@ model LoyaltyTransaction {
 
 model Notification {
   id         String              @id @default(uuid()) @db.Uuid
+  companyId  String              @map("company_id") @db.Uuid
+  company    Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customerId String?             @map("customer_id") @db.Uuid
   customer   Customer?           @relation(fields: [customerId], references: [id])
   channel    NotificationChannel
@@ -701,29 +743,51 @@ model Notification {
 }
 
 // ------------------------------------------------------------------
-// CONFIGURAÇÕES DA LOJA (linha única / singleton)
+// EMPRESAS (multi-tenant)
 // ------------------------------------------------------------------
 
-model StoreSettings {
-  id                  String      @id @default(uuid()) @db.Uuid
-  name                String      @default("Lanchonete Delivery")
-  logoUrl             String?     @map("logo_url")
-  primaryColor        String      @default("#FF7A00") @map("primary_color")
-  phone               String?
-  whatsapp            String?
-  addressText         String?     @map("address_text")
-  openingHours        Json?       @map("opening_hours")
-  deliveryFeeDefault  Decimal     @default(0) @map("delivery_fee_default") @db.Decimal(10, 2)
-  minOrderValue       Decimal     @default(0) @map("min_order_value") @db.Decimal(10, 2)
-  avgPrepTimeMinutes  Int?        @map("avg_prep_time_minutes")
-  pixKey              String?     @map("pix_key")
-  status              StoreStatus @default(OPEN)
-  socialLinks         Json?       @map("social_links")
-  autoMessages        Json?       @map("auto_messages")
-  createdAt           DateTime    @default(now()) @map("created_at")
-  updatedAt           DateTime    @updatedAt @map("updated_at")
+// Cada empresa que usa a plataforma. Substitui o antigo StoreSettings
+// (que era uma única linha global) — agora é uma linha por empresa,
+// com sua própria marca (nome/logo/cor) e configurações de loja.
+model Company {
+  id                 String      @id @default(uuid()) @db.Uuid
+  slug               String      @unique
+  customDomain       String?     @unique @map("custom_domain")
+  name               String
+  logoUrl            String?     @map("logo_url")
+  primaryColor       String      @default("#FF7A00") @map("primary_color")
+  secondaryColor     String?     @map("secondary_color")
+  phone              String?
+  whatsapp           String?
+  addressText        String?     @map("address_text")
+  openingHours       Json?       @map("opening_hours")
+  deliveryFeeDefault Decimal     @default(0) @map("delivery_fee_default") @db.Decimal(10, 2)
+  minOrderValue      Decimal     @default(0) @map("min_order_value") @db.Decimal(10, 2)
+  avgPrepTimeMinutes Int?        @map("avg_prep_time_minutes")
+  pixKey             String?     @map("pix_key")
+  status             StoreStatus @default(OPEN)
+  socialLinks        Json?       @map("social_links")
+  autoMessages       Json?       @map("auto_messages")
+  // Contador usado para gerar orderNumber sequencial por empresa
+  // (incrementado com lock de linha dentro da transaction de criação
+  // do pedido — ver orders.service.ts).
+  lastOrderNumber    Int         @default(0) @map("last_order_number")
+  active             Boolean     @default(true)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
 
-  @@map("store_settings")
+  memberships   CompanyMembership[]
+  categories    Category[]
+  products      Product[]
+  coupons       Coupon[]
+  promotions    Promotion[]
+  deliveryZones DeliveryZone[]
+  groupOrders   GroupOrder[]
+  orders        Order[]
+  deliveries    Delivery[]
+  notifications Notification[]
+
+  @@map("companies")
 }
 
 // ------------------------------------------------------------------

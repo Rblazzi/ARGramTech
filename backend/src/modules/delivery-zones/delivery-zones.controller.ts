@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { CurrentCompany } from '../../common/decorators/current-company.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
 import { DeliveryZonesService } from './delivery-zones.service';
@@ -24,15 +25,15 @@ export class DeliveryZonesController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.deliveryZonesService.findAllActive();
+  findAll(@CurrentCompany() companyId: string) {
+    return this.deliveryZonesService.findAllActive(companyId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...MANAGE_ROLES)
   @Get('admin')
-  findAllForAdmin() {
-    return this.deliveryZonesService.findAllForAdmin();
+  findAllForAdmin(@CurrentCompany() companyId: string) {
+    return this.deliveryZonesService.findAllForAdmin(companyId);
   }
 
   // Preview do frete antes de confirmar o pedido, usando o subtotal do
@@ -42,12 +43,13 @@ export class DeliveryZonesController {
   @Post('quote')
   async quote(@CurrentUser() user: AuthenticatedUser, @Body() dto: QuoteDeliveryFeeDto) {
     const address = await this.prisma.address.findFirst({
-      where: { id: dto.addressId, customerId: user.id, deletedAt: null },
+      where: { id: dto.addressId, customerId: user.membershipId, deletedAt: null },
     });
     if (!address) throw new NotFoundException('Endereço não encontrado');
 
-    const cart = await this.cartService.getSummary(user.id);
+    const cart = await this.cartService.getSummary(user.membershipId);
     const fee = await this.deliveryZonesService.calculateFee({
+      companyId: user.companyId,
       type: OrderType.DELIVERY,
       address,
       subtotal: cart.subtotal,
@@ -58,22 +60,22 @@ export class DeliveryZonesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...MANAGE_ROLES)
   @Post()
-  create(@Body() dto: CreateDeliveryZoneDto) {
-    return this.deliveryZonesService.create(dto);
+  create(@CurrentCompany() companyId: string, @Body() dto: CreateDeliveryZoneDto) {
+    return this.deliveryZonesService.create(companyId, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...MANAGE_ROLES)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateDeliveryZoneDto) {
-    return this.deliveryZonesService.update(id, dto);
+  update(@CurrentCompany() companyId: string, @Param('id') id: string, @Body() dto: UpdateDeliveryZoneDto) {
+    return this.deliveryZonesService.update(companyId, id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...MANAGE_ROLES)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    await this.deliveryZonesService.remove(id);
+  async remove(@CurrentCompany() companyId: string, @Param('id') id: string) {
+    await this.deliveryZonesService.remove(companyId, id);
   }
 }

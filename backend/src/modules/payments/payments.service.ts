@@ -19,7 +19,7 @@ export class PaymentsService {
   }
 
   // Gera (ou reaproveita, se ainda válido) a cobrança PIX de um pagamento.
-  async generatePixCharge(customerId: string, paymentId: string) {
+  async generatePixCharge(customerId: string, companyId: string, paymentId: string) {
     const payment = await this.findOwnedOrThrow(customerId, paymentId);
 
     if (payment.method !== PaymentMethod.PIX) {
@@ -33,7 +33,7 @@ export class PaymentsService {
     }
 
     const txid = `PED${payment.order.orderNumber}`;
-    const charge = await this.pixProvider.createCharge({ amount: Number(payment.amount), txid });
+    const charge = await this.pixProvider.createCharge({ companyId, amount: Number(payment.amount), txid });
 
     return this.prisma.payment.update({
       where: { id: paymentId },

@@ -16,12 +16,12 @@ function startOfToday(): Date {
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSalesSummary(params: { from?: Date; to?: Date }) {
+  async getSalesSummary(companyId: string, params: { from?: Date; to?: Date }) {
     const from = params.from ?? startOfToday();
     const to = params.to ?? new Date();
 
     const orders = await this.prisma.order.findMany({
-      where: { createdAt: { gte: from, lte: to } },
+      where: { companyId, createdAt: { gte: from, lte: to } },
       include: {
         items: { include: { product: { select: { id: true, name: true } } } },
         payments: true,
@@ -89,13 +89,13 @@ export class ReportsService {
     };
   }
 
-  async exportOrdersCsv(params: { from?: Date; to?: Date }): Promise<string> {
+  async exportOrdersCsv(companyId: string, params: { from?: Date; to?: Date }): Promise<string> {
     const from = params.from ?? startOfToday();
     const to = params.to ?? new Date();
 
     const orders = await this.prisma.order.findMany({
-      where: { createdAt: { gte: from, lte: to } },
-      include: { customer: { include: { user: { select: { name: true } } } } },
+      where: { companyId, createdAt: { gte: from, lte: to } },
+      include: { customer: { include: { membership: { include: { user: { select: { name: true } } } } } } },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -104,7 +104,7 @@ export class ReportsService {
       [
         o.orderNumber,
         o.createdAt.toISOString(),
-        `"${o.customer.user.name.replace(/"/g, '""')}"`,
+        `"${o.customer.membership.user.name.replace(/"/g, '""')}"`,
         o.type,
         o.status,
         o.subtotal,

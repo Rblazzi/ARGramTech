@@ -10,7 +10,7 @@ import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { ApplyCouponDto } from './dto/apply-coupon.dto';
 
-// O carrinho é sempre do cliente autenticado (id do customer == id do user).
+// O carrinho é sempre do cliente autenticado (customerId == membershipId).
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.CUSTOMER)
 @Controller('cart')
@@ -19,12 +19,12 @@ export class CartController {
 
   @Get()
   getCart(@CurrentUser() user: AuthenticatedUser) {
-    return this.cartService.getSummary(user.id);
+    return this.cartService.getSummary(user.membershipId);
   }
 
   @Post('items')
   addItem(@CurrentUser() user: AuthenticatedUser, @Body() dto: AddCartItemDto) {
-    return this.cartService.addItem(user.id, dto);
+    return this.cartService.addItem(user.membershipId, dto);
   }
 
   @Patch('items/:itemId')
@@ -33,21 +33,21 @@ export class CartController {
     @Param('itemId') itemId: string,
     @Body() dto: UpdateCartItemDto,
   ) {
-    return this.cartService.updateItem(user.id, itemId, dto);
+    return this.cartService.updateItem(user.membershipId, itemId, dto);
   }
 
   @Delete('items/:itemId')
   removeItem(@CurrentUser() user: AuthenticatedUser, @Param('itemId') itemId: string) {
-    return this.cartService.removeItem(user.id, itemId);
+    return this.cartService.removeItem(user.membershipId, itemId);
   }
 
   @Post('coupon')
   applyCoupon(@CurrentUser() user: AuthenticatedUser, @Body() dto: ApplyCouponDto) {
-    return this.cartService.applyCoupon(user.id, dto.code);
+    return this.cartService.applyCoupon(user.membershipId, user.companyId, dto.code);
   }
 
   @Delete('coupon')
   removeCoupon(@CurrentUser() user: AuthenticatedUser) {
-    return this.cartService.removeCoupon(user.id);
+    return this.cartService.removeCoupon(user.membershipId);
   }
 }

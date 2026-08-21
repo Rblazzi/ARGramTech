@@ -33,7 +33,7 @@ const ORDER_INCLUDE = {
   payments: true,
   address: true,
   delivery: true,
-  customer: { include: { user: { select: { name: true, phone: true } } } },
+  customer: { include: { membership: { include: { user: { select: { name: true, phone: true } } } } } },
 } satisfies Prisma.OrderInclude;
 
 // Máquina de estados dos pedidos: de qual status se pode ir para quais.
@@ -90,7 +90,7 @@ export class OrdersService {
     return order;
   }
 
-  async create(customerId: string, dto: CreateOrderDto) {
+  async create(customerId: string, companyId: string, dto: CreateOrderDto) {
     const summary = await this.cartService.getSummary(customerId);
     if (!summary.id || summary.items.length === 0) {
       throw new BadRequestException('Seu carrinho está vazio');
@@ -105,6 +105,7 @@ export class OrdersService {
     }
 
     const deliveryFee = await this.deliveryZonesService.calculateFee({
+      companyId,
       type: dto.type,
       address,
       subtotal: summary.subtotal,
@@ -114,8 +115,19 @@ export class OrdersService {
     const cart = await this.prisma.cart.findUniqueOrThrow({ where: { id: summary.id } });
 
     const order = await this.prisma.$transaction(async (tx) => {
+      // UPDATE...RETURNING é atômico por linha no Postgres — concorrência
+      // entre pedidos da mesma empresa serializa aqui sem precisar de um
+      // SELECT ... FOR UPDATE explícito.
+      const [{ last_order_number: orderNumber }] = await tx.$queryRaw<{ last_order_number: number }[]>`
+        UPDATE companies SET last_order_number = last_order_number + 1
+        WHERE id = ${companyId}::uuid
+        RETURNING last_order_number
+      `;
+
       const created = await tx.order.create({
         data: {
+          companyId,
+          orderNumber,
           customerId,
           type: dto.type,
           status: OrderStatus.RECEIVED,
@@ -144,7 +156,7 @@ export class OrdersService {
             })),
           },
           statusHistory: {
-            create: { status: OrderStatus.RECEIVED, changedByUserId: customerId, note: 'Pedido criado pelo cliente' },
+            create: { status: OrderStatus.RECEIVED, note: 'Pedido criado pelo cliente' },
           },
           payments: {
             create: { method: dto.paymentMethod, status: PaymentStatus.PENDING, amount: summary.total },
@@ -164,16 +176,17 @@ export class OrdersService {
       return created;
     });
 
-    await this.maybeNotifyMinOrderValuePromotion(customerId, summary.subtotal);
+    await this.maybeNotifyMinOrderValuePromotion(companyId, customerId, summary.subtotal);
 
     return order;
   }
 
   // Promoção reativa (não precisa de cron): se o pedido bateu o valor
-  // mínimo configurado em alguma promoção ativa, avisa o cliente.
-  private async maybeNotifyMinOrderValuePromotion(customerId: string, subtotal: number) {
+  // mínimo configurado em alguma promoção ativa DESTA empresa, avisa o
+  // cliente.
+  private async maybeNotifyMinOrderValuePromotion(companyId: string, customerId: string, subtotal: number) {
     const promotions = await this.prisma.promotion.findMany({
-      where: { type: 'MIN_ORDER_VALUE', active: true },
+      where: { companyId, type: 'MIN_ORDER_VALUE', active: true },
       include: { coupon: true },
     });
 
@@ -192,18 +205,18 @@ export class OrdersService {
     }
   }
 
-  // Fila da cozinha/atendimento: pedidos ainda não finalizados, mais
-  // antigos primeiro (FIFO).
-  findActiveForStaff() {
+  // Fila da cozinha/atendimento: pedidos ainda não finalizados desta
+  // empresa, mais antigos primeiro (FIFO).
+  findActiveForStaff(companyId: string) {
     return this.prisma.order.findMany({
-      where: { status: { notIn: [OrderStatus.DELIVERED, OrderStatus.CANCELLED] }, ...VISIBLE_TO_ORDER_LISTS },
+      where: { companyId, status: { notIn: [OrderStatus.DELIVERED, OrderStatus.CANCELLED] }, ...VISIBLE_TO_ORDER_LISTS },
       include: ORDER_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
   }
 
-  async updateStatus(staffUserId: string, orderId: string, dto: UpdateOrderStatusDto) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+  async updateStatus(staffUserId: string, companyId: string, orderId: string, dto: UpdateOrderStatusDto) {
+    const order = await this.prisma.order.findFirst({ where: { id: orderId, companyId } });
     if (!order) throw new NotFoundException('Pedido não encontrado');
 
     const allowedNext = ORDER_TRANSITIONS[order.status];
@@ -229,7 +242,7 @@ export class OrdersService {
           delivery: {
             connectOrCreate: {
               where: { orderId },
-              create: { status: 'AWAITING_DRIVER' },
+              create: { companyId, status: 'AWAITING_DRIVER' },
             },
           },
         }),

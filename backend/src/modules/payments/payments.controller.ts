@@ -15,17 +15,17 @@ export class PaymentsController {
 
   @Get(':id')
   get(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.paymentsService.getForCustomer(user.id, id);
+    return this.paymentsService.getForCustomer(user.membershipId, id);
   }
 
   @Post(':id/pix')
   generatePix(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.paymentsService.generatePixCharge(user.id, id);
+    return this.paymentsService.generatePixCharge(user.membershipId, user.companyId, id);
   }
 
   // Só para desenvolvimento local — ver aviso em PaymentsService.
   @Post(':id/simulate-approval')
   simulateApproval(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.paymentsService.simulateApprovalForTesting(user.id, id);
+    return this.paymentsService.simulateApprovalForTesting(user.membershipId, id);
   }
 }

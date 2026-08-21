@@ -18,8 +18,19 @@ export class NotificationsService {
     message: string;
     channel?: NotificationChannel;
   }) {
+    // companyId é derivado do próprio customer (via a membership dele) em
+    // vez de exigido como parâmetro — quem chama notify() normalmente já
+    // só tem o customerId em mãos (ex.: PromotionsService varrendo
+    // clientes de várias empresas), então isso evita ter que threadar
+    // companyId por todo call site.
+    const customer = await this.prisma.customer.findUniqueOrThrow({
+      where: { id: params.customerId },
+      include: { membership: true },
+    });
+
     return this.prisma.notification.create({
       data: {
+        companyId: customer.membership.companyId,
         customerId: params.customerId,
         channel: params.channel ?? NotificationChannel.PUSH,
         title: params.title,

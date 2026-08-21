@@ -20,7 +20,9 @@ interface AuthSession {
 
 // Toda a lógica de autenticação fica aqui. O Supabase (GoTrue) é o motor
 // que de fato guarda credenciais e emite tokens; este serviço só orquestra
-// as chamadas e sincroniza o resultado com a tabela local `users`.
+// as chamadas e sincroniza o resultado com a tabela local `users` (mais a
+// membership do usuário na empresa da request — ver comentário no
+// TenantMiddleware sobre como companyId chega até aqui).
 @Injectable()
 export class AuthService {
   constructor(
@@ -28,7 +30,7 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthSession> {
+  async register(dto: RegisterDto, companyId: string): Promise<AuthSession> {
     const { data: created, error: createError } = await this.supabase.adminClient.auth.admin.createUser({
       email: dto.email,
       password: dto.password,
@@ -43,17 +45,18 @@ export class AuthService {
       throw new BadRequestException(createError.message);
     }
 
-    await this.usersService.upsert({
+    await this.usersService.upsertIdentity({
       id: created.user.id,
       email: dto.email,
       name: dto.name,
       phone: dto.phone,
     });
+    await this.usersService.ensureMembership(created.user.id, companyId);
 
-    return this.login({ email: dto.email, password: dto.password });
+    return this.login({ email: dto.email, password: dto.password }, companyId);
   }
 
-  async login(dto: LoginDto): Promise<AuthSession> {
+  async login(dto: LoginDto, companyId: string): Promise<AuthSession> {
     const { data, error } = await this.supabase.anonClient.auth.signInWithPassword({
       email: dto.email,
       password: dto.password,
@@ -63,10 +66,10 @@ export class AuthService {
       throw new UnauthorizedException('E-mail ou senha inválidos');
     }
 
-    return this.toSession(data.session);
+    return this.toSession(data.session, companyId);
   }
 
-  async refresh(refreshToken: string): Promise<AuthSession> {
+  async refresh(refreshToken: string, companyId: string): Promise<AuthSession> {
     const { data, error } = await this.supabase.anonClient.auth.refreshSession({
       refresh_token: refreshToken,
     });
@@ -75,7 +78,7 @@ export class AuthService {
       throw new UnauthorizedException('Sessão expirada, faça login novamente');
     }
 
-    return this.toSession(data.session);
+    return this.toSession(data.session, companyId);
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
@@ -103,18 +106,24 @@ export class AuthService {
     }
   }
 
-  private async toSession(session: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-    user: { id: string; email?: string; user_metadata?: Record<string, unknown> };
-  }): Promise<AuthSession> {
+  private async toSession(
+    session: {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      user: { id: string; email?: string; user_metadata?: Record<string, unknown> };
+    },
+    companyId: string,
+  ): Promise<AuthSession> {
     const email = session.user.email ?? '';
     const name = (session.user.user_metadata?.name as string) ?? email;
 
     // Garante que o usuário local exista mesmo se ele foi criado
-    // diretamente no Supabase (ex.: painel do Supabase, migração de dados).
-    const localUser = await this.usersService.upsert({ id: session.user.id, email, name });
+    // diretamente no Supabase (ex.: painel do Supabase, migração de dados),
+    // e que ele tenha uma membership nesta empresa (senão é seu primeiro
+    // acesso a ela, e entra como CUSTOMER por padrão).
+    const localUser = await this.usersService.upsertIdentity({ id: session.user.id, email, name });
+    await this.usersService.ensureMembership(session.user.id, companyId);
 
     return {
       accessToken: session.access_token,

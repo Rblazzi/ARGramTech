@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { envValidationSchema } from './config/env.validation';
+import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { PrismaModule } from './prisma/prisma.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -61,4 +62,18 @@ import { ReportsModule } from './modules/reports/reports.module';
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // Resolve a empresa (tenant) em toda rota antes de qualquer guard —
+  // exceto o webhook de pagamento e o disparador de cron, que são
+  // chamados por sistemas externos (gateway de pagamento, Vercel Cron),
+  // não por um cliente que sabe de qual empresa está falando.
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantMiddleware)
+      .exclude(
+        { path: 'payments/webhook/(.*)', method: RequestMethod.ALL },
+        { path: 'promotions/cron-trigger', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+  }
+}

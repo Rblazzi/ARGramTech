@@ -9,31 +9,32 @@ export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Lista pública: só categorias ativas, ordenadas para exibição no cardápio.
-  findAllActive() {
+  findAllActive(companyId: string) {
     return this.prisma.category.findMany({
-      where: { active: true, deletedAt: null },
+      where: { companyId, active: true, deletedAt: null },
       orderBy: { position: 'asc' },
     });
   }
 
   // Lista para o admin: inclui inativas também.
-  findAllForAdmin() {
+  findAllForAdmin(companyId: string) {
     return this.prisma.category.findMany({
-      where: { deletedAt: null },
+      where: { companyId, deletedAt: null },
       orderBy: { position: 'asc' },
     });
   }
 
-  async findByIdOrThrow(id: string) {
-    const category = await this.prisma.category.findFirst({ where: { id, deletedAt: null } });
+  async findByIdOrThrow(companyId: string, id: string) {
+    const category = await this.prisma.category.findFirst({ where: { id, companyId, deletedAt: null } });
     if (!category) throw new NotFoundException('Categoria não encontrada');
     return category;
   }
 
-  async create(dto: CreateCategoryDto) {
-    const slug = await this.uniqueSlug(dto.name);
+  async create(companyId: string, dto: CreateCategoryDto) {
+    const slug = await this.uniqueSlug(companyId, dto.name);
     return this.prisma.category.create({
       data: {
+        companyId,
         name: dto.name,
         slug,
         description: dto.description,
@@ -44,8 +45,8 @@ export class CategoriesService {
     });
   }
 
-  async update(id: string, dto: UpdateCategoryDto) {
-    await this.findByIdOrThrow(id);
+  async update(companyId: string, id: string, dto: UpdateCategoryDto) {
+    await this.findByIdOrThrow(companyId, id);
     return this.prisma.category.update({
       where: { id },
       data: {
@@ -60,18 +61,20 @@ export class CategoriesService {
 
   // Soft delete: preserva histórico de pedidos que referenciam produtos
   // desta categoria.
-  async remove(id: string) {
-    await this.findByIdOrThrow(id);
+  async remove(companyId: string, id: string) {
+    await this.findByIdOrThrow(companyId, id);
     await this.prisma.category.update({ where: { id }, data: { deletedAt: new Date(), active: false } });
   }
 
-  private async uniqueSlug(name: string): Promise<string> {
+  private async uniqueSlug(companyId: string, name: string): Promise<string> {
     const base = slugify(name);
     let candidate = base;
     let suffix = 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const existing = await this.prisma.category.findUnique({ where: { slug: candidate } });
+      const existing = await this.prisma.category.findUnique({
+        where: { companyId_slug: { companyId, slug: candidate } },
+      });
       if (!existing) return candidate;
       suffix += 1;
       candidate = `${base}-${suffix}`;

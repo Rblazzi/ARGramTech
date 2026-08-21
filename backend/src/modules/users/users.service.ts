@@ -7,10 +7,7 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   findById(id: string) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: { customer: true },
-    });
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   async findByIdOrThrow(id: string) {
@@ -19,26 +16,17 @@ export class UsersService {
     return user;
   }
 
-  // Cria (ou atualiza, se já existir) o registro local do usuário e,
-  // quando o papel for CUSTOMER, também a linha de customer associada.
-  // Chamado depois que o usuário é criado/autenticado no Supabase Auth.
-  async upsert(params: {
-    id: string;
-    email: string;
-    name: string;
-    phone?: string;
-    role?: UserRole;
-  }) {
-    const role = params.role ?? UserRole.CUSTOMER;
-
-    const user = await this.prisma.user.upsert({
+  // Cria (ou atualiza) só a identidade global do usuário — sem role, sem
+  // vínculo com empresa nenhuma. O papel dele em cada empresa vive em
+  // CompanyMembership (ver ensureMembership).
+  upsertIdentity(params: { id: string; email: string; name: string; phone?: string }) {
+    return this.prisma.user.upsert({
       where: { id: params.id },
       create: {
         id: params.id,
         email: params.email,
         name: params.name,
         phone: params.phone,
-        role,
       },
       update: {
         email: params.email,
@@ -46,19 +34,32 @@ export class UsersService {
         phone: params.phone,
       },
     });
+  }
 
-    // Usa o papel real do usuário já persistido (não o parâmetro de
-    // entrada, que só vale para a criação) para decidir se cria o
-    // customer — evita criar customer para um admin/atendente/etc. que
-    // já existia e só está fazendo login de novo.
-    if (user.role === UserRole.CUSTOMER) {
+  // Garante que o usuário tenha uma membership na empresa informada,
+  // criando com o role padrão (CUSTOMER) se ainda não existir. Não muda o
+  // role de uma membership já existente — isso só é decidido na criação.
+  //
+  // Quando o role (já existente ou recém-criado) for CUSTOMER, garante
+  // também a linha satélite em `customers` (necessária pra carrinho,
+  // pedidos, fidelidade etc.). DRIVER não entra aqui de propósito: quem
+  // cria um entregador é DeliveryDriversService, que já cria a linha em
+  // `delivery_drivers` com os dados reais (veículo, placa).
+  async ensureMembership(userId: string, companyId: string, role: UserRole = UserRole.CUSTOMER) {
+    const membership = await this.prisma.companyMembership.upsert({
+      where: { userId_companyId: { userId, companyId } },
+      create: { userId, companyId, role },
+      update: {},
+    });
+
+    if (membership.role === UserRole.CUSTOMER) {
       await this.prisma.customer.upsert({
-        where: { id: params.id },
-        create: { id: params.id },
+        where: { id: membership.id },
+        create: { id: membership.id },
         update: {},
       });
     }
 
-    return user;
+    return membership;
   }
 }

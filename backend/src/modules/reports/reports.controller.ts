@@ -4,6 +4,7 @@ import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentCompany } from '../../common/decorators/current-company.decorator';
 import { ReportsService } from './reports.service';
 
 function parseDate(value?: string): Date | undefined {
@@ -17,13 +18,18 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('sales')
-  getSales(@Query('from') from?: string, @Query('to') to?: string) {
-    return this.reportsService.getSalesSummary({ from: parseDate(from), to: parseDate(to) });
+  getSales(@CurrentCompany() companyId: string, @Query('from') from?: string, @Query('to') to?: string) {
+    return this.reportsService.getSalesSummary(companyId, { from: parseDate(from), to: parseDate(to) });
   }
 
   @Get('sales/export')
-  async exportSales(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res({ passthrough: true }) res: Response) {
-    const csv = await this.reportsService.exportOrdersCsv({ from: parseDate(from), to: parseDate(to) });
+  async exportSales(
+    @CurrentCompany() companyId: string,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const csv = await this.reportsService.exportOrdersCsv(companyId, { from: parseDate(from), to: parseDate(to) });
     res.header('Content-Type', 'text/csv; charset=utf-8');
     res.header('Content-Disposition', 'attachment; filename="pedidos.csv"');
     return csv;

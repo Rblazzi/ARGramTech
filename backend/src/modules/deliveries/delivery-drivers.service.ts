@@ -14,14 +14,15 @@ export class DeliveryDriversService {
     private readonly usersService: UsersService,
   ) {}
 
-  findAll() {
+  findAll(companyId: string) {
     return this.prisma.deliveryDriver.findMany({
-      include: { user: { select: { name: true, email: true, phone: true, active: true } } },
+      where: { membership: { companyId } },
+      include: { membership: { include: { user: { select: { name: true, email: true, phone: true, active: true } } } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async create(dto: CreateDriverDto) {
+  async create(companyId: string, dto: CreateDriverDto) {
     const { data, error } = await this.supabase.adminClient.auth.admin.createUser({
       email: dto.email,
       password: dto.password,
@@ -36,28 +37,28 @@ export class DeliveryDriversService {
       throw error;
     }
 
-    await this.usersService.upsert({
+    await this.usersService.upsertIdentity({
       id: data.user.id,
       email: dto.email,
       name: dto.name,
       phone: dto.phone,
-      role: UserRole.DRIVER,
     });
+    const membership = await this.usersService.ensureMembership(data.user.id, companyId, UserRole.DRIVER);
 
     return this.prisma.deliveryDriver.create({
-      data: { id: data.user.id, vehicleType: dto.vehicleType, vehiclePlate: dto.vehiclePlate },
-      include: { user: { select: { name: true, email: true, phone: true, active: true } } },
+      data: { id: membership.id, vehicleType: dto.vehicleType, vehiclePlate: dto.vehiclePlate },
+      include: { membership: { include: { user: { select: { name: true, email: true, phone: true, active: true } } } } },
     });
   }
 
-  async update(id: string, dto: UpdateDriverDto) {
-    const driver = await this.prisma.deliveryDriver.findUnique({ where: { id } });
+  async update(companyId: string, id: string, dto: UpdateDriverDto) {
+    const driver = await this.prisma.deliveryDriver.findFirst({ where: { id, membership: { companyId } } });
     if (!driver) throw new NotFoundException('Entregador não encontrado');
 
     return this.prisma.deliveryDriver.update({
       where: { id },
       data: { vehicleType: dto.vehicleType, vehiclePlate: dto.vehiclePlate, active: dto.active },
-      include: { user: { select: { name: true, email: true, phone: true, active: true } } },
+      include: { membership: { include: { user: { select: { name: true, email: true, phone: true, active: true } } } } },
     });
   }
 }

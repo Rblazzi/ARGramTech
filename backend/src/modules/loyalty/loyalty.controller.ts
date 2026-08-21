@@ -16,11 +16,11 @@ export class LoyaltyController {
 
   @Get('me')
   getSummary(@CurrentUser() user: AuthenticatedUser) {
-    return this.loyaltyService.getSummary(user.id);
+    return this.loyaltyService.getSummary(user.membershipId);
   }
 
   @Post('redeem')
   redeem(@CurrentUser() user: AuthenticatedUser, @Body() dto: RedeemPointsDto) {
-    return this.loyaltyService.redeem(user.id, dto);
+    return this.loyaltyService.redeem(user.membershipId, user.companyId, dto);
   }
 }

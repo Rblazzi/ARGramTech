@@ -7,26 +7,28 @@ import { UpdateCouponDto } from './dto/update-coupon.dto';
 export class CouponsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(companyId: string) {
     return this.prisma.coupon.findMany({
+      where: { companyId },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { usages: true } } },
     });
   }
 
-  async findByIdOrThrow(id: string) {
-    const coupon = await this.prisma.coupon.findUnique({ where: { id } });
+  async findByIdOrThrow(companyId: string, id: string) {
+    const coupon = await this.prisma.coupon.findFirst({ where: { id, companyId } });
     if (!coupon) throw new NotFoundException('Cupom não encontrado');
     return coupon;
   }
 
-  async create(dto: CreateCouponDto) {
+  async create(companyId: string, dto: CreateCouponDto) {
     const code = dto.code.toUpperCase();
-    const existing = await this.prisma.coupon.findUnique({ where: { code } });
+    const existing = await this.prisma.coupon.findUnique({ where: { companyId_code: { companyId, code } } });
     if (existing) throw new ConflictException('Já existe um cupom com este código');
 
     return this.prisma.coupon.create({
       data: {
+        companyId,
         code,
         type: dto.type,
         value: dto.value,
@@ -40,8 +42,8 @@ export class CouponsService {
     });
   }
 
-  async update(id: string, dto: UpdateCouponDto) {
-    await this.findByIdOrThrow(id);
+  async update(companyId: string, id: string, dto: UpdateCouponDto) {
+    await this.findByIdOrThrow(companyId, id);
     return this.prisma.coupon.update({
       where: { id },
       data: {
@@ -53,8 +55,8 @@ export class CouponsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findByIdOrThrow(id);
+  async remove(companyId: string, id: string) {
+    await this.findByIdOrThrow(companyId, id);
     await this.prisma.coupon.update({ where: { id }, data: { active: false } });
   }
 }

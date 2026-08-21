@@ -23,35 +23,36 @@ const PRODUCT_INCLUDE = {
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAllActive(categoryId?: string) {
+  findAllActive(companyId: string, categoryId?: string) {
     return this.prisma.product.findMany({
-      where: { active: true, deletedAt: null, categoryId },
+      where: { companyId, active: true, deletedAt: null, categoryId },
       include: PRODUCT_INCLUDE,
       orderBy: { position: 'asc' },
     });
   }
 
-  findAllForAdmin(categoryId?: string) {
+  findAllForAdmin(companyId: string, categoryId?: string) {
     return this.prisma.product.findMany({
-      where: { deletedAt: null, categoryId },
+      where: { companyId, deletedAt: null, categoryId },
       include: PRODUCT_INCLUDE,
       orderBy: { position: 'asc' },
     });
   }
 
-  async findByIdOrThrow(id: string) {
+  async findByIdOrThrow(companyId: string, id: string) {
     const product = await this.prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, companyId, deletedAt: null },
       include: PRODUCT_INCLUDE,
     });
     if (!product) throw new NotFoundException('Produto não encontrado');
     return product;
   }
 
-  async create(dto: CreateProductDto) {
-    await this.assertInternalCodeAvailable(dto.internalCode);
+  async create(companyId: string, dto: CreateProductDto) {
+    await this.assertInternalCodeAvailable(companyId, dto.internalCode);
     return this.prisma.product.create({
       data: {
+        companyId,
         categoryId: dto.categoryId,
         name: dto.name,
         description: dto.description,
@@ -66,10 +67,10 @@ export class ProductsService {
     });
   }
 
-  async update(id: string, dto: UpdateProductDto) {
-    await this.findByIdOrThrow(id);
+  async update(companyId: string, id: string, dto: UpdateProductDto) {
+    await this.findByIdOrThrow(companyId, id);
     if (dto.internalCode) {
-      await this.assertInternalCodeAvailable(dto.internalCode, id);
+      await this.assertInternalCodeAvailable(companyId, dto.internalCode, id);
     }
     return this.prisma.product.update({
       where: { id },
@@ -89,13 +90,13 @@ export class ProductsService {
   }
 
   // Soft delete: mantém o histórico de pedidos que já referenciam o produto.
-  async remove(id: string) {
-    await this.findByIdOrThrow(id);
+  async remove(companyId: string, id: string) {
+    await this.findByIdOrThrow(companyId, id);
     await this.prisma.product.update({ where: { id }, data: { deletedAt: new Date(), active: false } });
   }
 
-  async createOptionGroup(productId: string, dto: CreateOptionGroupDto) {
-    await this.findByIdOrThrow(productId);
+  async createOptionGroup(companyId: string, productId: string, dto: CreateOptionGroupDto) {
+    await this.findByIdOrThrow(companyId, productId);
     return this.prisma.productOptionGroup.create({
       data: {
         productId,
@@ -110,8 +111,8 @@ export class ProductsService {
     });
   }
 
-  async updateOptionGroup(groupId: string, dto: UpdateOptionGroupDto) {
-    await this.findOptionGroupOrThrow(groupId);
+  async updateOptionGroup(companyId: string, groupId: string, dto: UpdateOptionGroupDto) {
+    await this.findOptionGroupOrThrow(companyId, groupId);
     return this.prisma.productOptionGroup.update({
       where: { id: groupId },
       data: dto,
@@ -119,16 +120,16 @@ export class ProductsService {
     });
   }
 
-  async removeOptionGroup(groupId: string) {
-    await this.findOptionGroupOrThrow(groupId);
+  async removeOptionGroup(companyId: string, groupId: string) {
+    await this.findOptionGroupOrThrow(companyId, groupId);
     // Grupo e itens não têm pedidos históricos apontando direto para eles
     // (pedidos guardam um snapshot em order_item_options), então aqui é
     // exclusão definitiva mesmo, não soft delete.
     await this.prisma.productOptionGroup.delete({ where: { id: groupId } });
   }
 
-  async createOptionItem(groupId: string, dto: CreateOptionItemDto) {
-    await this.findOptionGroupOrThrow(groupId);
+  async createOptionItem(companyId: string, groupId: string, dto: CreateOptionItemDto) {
+    await this.findOptionGroupOrThrow(companyId, groupId);
     return this.prisma.productOptionItem.create({
       data: {
         groupId,
@@ -140,31 +141,37 @@ export class ProductsService {
     });
   }
 
-  async updateOptionItem(itemId: string, dto: UpdateOptionItemDto) {
-    await this.findOptionItemOrThrow(itemId);
+  async updateOptionItem(companyId: string, itemId: string, dto: UpdateOptionItemDto) {
+    await this.findOptionItemOrThrow(companyId, itemId);
     return this.prisma.productOptionItem.update({ where: { id: itemId }, data: dto });
   }
 
-  async removeOptionItem(itemId: string) {
-    await this.findOptionItemOrThrow(itemId);
+  async removeOptionItem(companyId: string, itemId: string) {
+    await this.findOptionItemOrThrow(companyId, itemId);
     await this.prisma.productOptionItem.delete({ where: { id: itemId } });
   }
 
-  private async assertInternalCodeAvailable(internalCode: string, ignoreProductId?: string) {
-    const existing = await this.prisma.product.findUnique({ where: { internalCode } });
+  private async assertInternalCodeAvailable(companyId: string, internalCode: string, ignoreProductId?: string) {
+    const existing = await this.prisma.product.findUnique({
+      where: { companyId_internalCode: { companyId, internalCode } },
+    });
     if (existing && existing.id !== ignoreProductId) {
       throw new ConflictException('Já existe um produto com este código interno');
     }
   }
 
-  private async findOptionGroupOrThrow(groupId: string) {
-    const group = await this.prisma.productOptionGroup.findUnique({ where: { id: groupId } });
+  private async findOptionGroupOrThrow(companyId: string, groupId: string) {
+    const group = await this.prisma.productOptionGroup.findFirst({
+      where: { id: groupId, product: { companyId } },
+    });
     if (!group) throw new NotFoundException('Grupo de opções não encontrado');
     return group;
   }
 
-  private async findOptionItemOrThrow(itemId: string) {
-    const item = await this.prisma.productOptionItem.findUnique({ where: { id: itemId } });
+  private async findOptionItemOrThrow(companyId: string, itemId: string) {
+    const item = await this.prisma.productOptionItem.findFirst({
+      where: { id: itemId, group: { product: { companyId } } },
+    });
     if (!item) throw new NotFoundException('Item de opção não encontrado');
     return item;
   }

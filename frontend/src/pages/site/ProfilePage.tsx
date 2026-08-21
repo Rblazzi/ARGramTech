@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
+import { fetchAddressByCep } from '../../lib/cep';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { LocationMap } from '../../components/LocationMap';
 import type { Address, GeocodingResult, UserProfile } from '../../types';
@@ -70,6 +71,19 @@ export function ProfilePage() {
   const [isSearchingMap, setIsSearchingMap] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [isLookingUpCep, setIsLookingUpCep] = useState(false);
+
+  async function handleZipCodeChange(value: string) {
+    setAddressForm((f) => ({ ...f, zipCode: value }));
+    if (value.replace(/\D/g, '').length !== 8) return;
+
+    setIsLookingUpCep(true);
+    const found = await fetchAddressByCep(value);
+    setIsLookingUpCep(false);
+    if (found) {
+      setAddressForm((f) => ({ ...f, street: found.street, neighborhood: found.neighborhood, city: found.city, state: found.state }));
+    }
+  }
 
   function applyGeocodingResult(result: GeocodingResult) {
     setAddressForm((f) => ({
@@ -419,6 +433,20 @@ export function ProfilePage() {
               onChange={(e) => setAddressForm((f) => ({ ...f, label: e.target.value }))}
               className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)] sm:col-span-2"
             />
+            <div className="relative sm:col-span-2">
+              <input
+                required
+                placeholder="CEP"
+                inputMode="numeric"
+                maxLength={9}
+                value={addressForm.zipCode}
+                onChange={(e) => handleZipCodeChange(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)]"
+              />
+              {isLookingUpCep && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">Buscando...</span>
+              )}
+            </div>
             <input
               required
               placeholder="Rua"
@@ -459,13 +487,6 @@ export function ProfilePage() {
               maxLength={2}
               value={addressForm.state}
               onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value.toUpperCase() }))}
-              className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)]"
-            />
-            <input
-              required
-              placeholder="CEP"
-              value={addressForm.zipCode}
-              onChange={(e) => setAddressForm((f) => ({ ...f, zipCode: e.target.value }))}
               className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--brand)]"
             />
 

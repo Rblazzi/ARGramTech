@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
+import { fetchAddressByCep } from '../../lib/cep';
 import { useCart } from '../../hooks/useCart';
 import { useCompanyPath } from '../../contexts/CompanyContext';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -36,6 +37,19 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLookingUpCep, setIsLookingUpCep] = useState(false);
+
+  async function handleZipCodeChange(value: string) {
+    setAddressForm((f) => ({ ...f, zipCode: value }));
+    if (value.replace(/\D/g, '').length !== 8) return;
+
+    setIsLookingUpCep(true);
+    const found = await fetchAddressByCep(value);
+    setIsLookingUpCep(false);
+    if (found) {
+      setAddressForm((f) => ({ ...f, street: found.street, neighborhood: found.neighborhood, city: found.city, state: found.state }));
+    }
+  }
 
   const { data: addresses } = useQuery({
     queryKey: ['addresses'],
@@ -170,13 +184,26 @@ export function CheckoutPage() {
             </button>
           ) : (
             <form onSubmit={handleCreateAddress} className="mt-3 grid gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 sm:grid-cols-2">
+              <div className="relative sm:col-span-2">
+                <input
+                  required
+                  placeholder="CEP"
+                  inputMode="numeric"
+                  maxLength={9}
+                  value={addressForm.zipCode}
+                  onChange={(e) => handleZipCodeChange(e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2"
+                />
+                {isLookingUpCep && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">Buscando...</span>
+                )}
+              </div>
               <input required placeholder="Rua" value={addressForm.street} onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 sm:col-span-2" />
               <input required placeholder="Número" value={addressForm.number} onChange={(e) => setAddressForm((f) => ({ ...f, number: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
               <input placeholder="Complemento" value={addressForm.complement} onChange={(e) => setAddressForm((f) => ({ ...f, complement: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
               <input required placeholder="Bairro" value={addressForm.neighborhood} onChange={(e) => setAddressForm((f) => ({ ...f, neighborhood: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
               <input required placeholder="Cidade" value={addressForm.city} onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
               <input required placeholder="Estado (UF)" value={addressForm.state} onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
-              <input required placeholder="CEP" value={addressForm.zipCode} onChange={(e) => setAddressForm((f) => ({ ...f, zipCode: e.target.value }))} className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2" />
               <button type="submit" disabled={createAddress.isPending} className="rounded-lg bg-[var(--brand)] px-4 py-2 font-medium text-[var(--brand-foreground)] sm:col-span-2">
                 Salvar endereço
               </button>

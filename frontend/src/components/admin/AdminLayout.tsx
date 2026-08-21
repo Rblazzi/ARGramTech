@@ -3,7 +3,13 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany, useCompanyPath } from '../../contexts/CompanyContext';
 
-const NAV_ITEMS = [
+interface NavItem {
+  to: string;
+  label: string;
+  end?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/categorias', label: 'Categorias' },
   { to: '/admin/produtos', label: 'Produtos' },
@@ -17,7 +23,7 @@ const NAV_ITEMS = [
 
 // Só ADMIN gerencia outros usuários (ver StaffController no backend —
 // restrito a ADMIN, diferente do resto que também libera MANAGER).
-const ADMIN_ONLY_NAV_ITEMS = [{ to: '/admin/usuarios', label: 'Usuários' }];
+const ADMIN_ONLY_NAV_ITEMS: NavItem[] = [{ to: '/admin/usuarios', label: 'Usuários' }];
 
 export function AdminLayout() {
   const { user, logout } = useAuth();

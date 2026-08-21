@@ -46,30 +46,50 @@ export function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <label htmlFor="register-name" className="sr-only">
+            Nome completo
+          </label>
           <input
+            id="register-name"
             required
+            autoComplete="name"
             placeholder="Nome completo"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--brand)]"
           />
+          <label htmlFor="register-email" className="sr-only">
+            E-mail
+          </label>
           <input
+            id="register-email"
             required
             type="email"
+            autoComplete="email"
             placeholder="E-mail"
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--brand)]"
           />
+          <label htmlFor="register-phone" className="sr-only">
+            Telefone
+          </label>
           <input
+            id="register-phone"
+            autoComplete="tel"
             placeholder="Telefone (opcional)"
             value={form.phone}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
             className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--brand)]"
           />
+          <label htmlFor="register-password" className="sr-only">
+            Senha
+          </label>
           <input
+            id="register-password"
             required
             type="password"
+            autoComplete="new-password"
             minLength={8}
             placeholder="Senha (mínimo 8 caracteres)"
             value={form.password}

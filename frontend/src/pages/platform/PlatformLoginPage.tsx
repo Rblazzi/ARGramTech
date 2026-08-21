@@ -27,31 +27,46 @@ export function PlatformLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <span className="mb-1 inline-block rounded bg-indigo-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-indigo-300">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4 text-[var(--text)]">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6"
+      >
+        <span className="mb-1 inline-block rounded bg-[var(--platform-accent)]/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--platform-accent)]">
           Plataforma
         </span>
         <h1 className="text-xl font-semibold">Painel da plataforma</h1>
-        <p className="mt-1 text-sm text-slate-400">Acesso restrito ao dono do sistema.</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Acesso restrito ao dono do sistema.</p>
 
         <div className="mt-5 flex flex-col gap-3">
-          <input
-            required
-            type="email"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
-          />
-          <input
-            required
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="platform-email" className="text-sm text-[var(--text-muted)]">
+              E-mail
+            </label>
+            <input
+              id="platform-email"
+              required
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="platform-password" className="text-sm text-[var(--text-muted)]">
+              Senha
+            </label>
+            <input
+              id="platform-password"
+              required
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
+            />
+          </div>
         </div>
 
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
@@ -59,7 +74,7 @@ export function PlatformLoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-5 w-full rounded-lg bg-indigo-500 px-4 py-2 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="mt-5 w-full rounded-lg bg-[var(--platform-accent)] px-4 py-2 font-medium text-[var(--platform-accent-foreground)] transition hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? 'Entrando...' : 'Entrar'}
         </button>

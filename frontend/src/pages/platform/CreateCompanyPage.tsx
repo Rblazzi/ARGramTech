@@ -55,43 +55,54 @@ export function CreateCompanyPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Nova empresa</h1>
-      <p className="mt-1 text-slate-400">Cadastra uma empresa nova na plataforma, já com o primeiro acesso de administrador dela.</p>
+      <p className="mt-1 text-[var(--text-muted)]">
+        Cadastra uma empresa nova na plataforma, já com o primeiro acesso de administrador dela.
+      </p>
 
       {created && (
         <div className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 p-4">
           <p className="font-medium text-green-400">Empresa "{created.name}" criada com sucesso!</p>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-[var(--text)]">
             Link de acesso:{' '}
             <a
               href={`${window.location.origin}/${created.slug}/login`}
               target="_blank"
               rel="noreferrer"
-              className="text-indigo-400 hover:underline"
+              className="text-[var(--platform-accent)] hover:underline"
             >
               {window.location.origin}/{created.slug}/login
             </a>
           </p>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Repasse esse link e o e-mail/senha de administrador que você cadastrou para o cliente.
           </p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-6 grid max-w-xl gap-3 rounded-xl border border-slate-800 bg-slate-900 p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-6 grid max-w-xl gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+      >
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Nome da empresa</label>
+          <label htmlFor="company-name" className="text-sm text-[var(--text-muted)]">
+            Nome da empresa
+          </label>
           <input
+            id="company-name"
             required
             placeholder="Pizzaria do João"
             value={form.name}
             onChange={(e) => handleNameChange(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Slug (usado na URL: argramtech.com.br/slug)</label>
+          <label htmlFor="company-slug" className="text-sm text-[var(--text-muted)]">
+            Slug (usado na URL: argramtech.com.br/slug)
+          </label>
           <input
+            id="company-slug"
             required
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
             title="Só letras minúsculas, números e hífen"
@@ -101,63 +112,78 @@ export function CreateCompanyPage() {
               setSlugTouched(true);
               setForm((f) => ({ ...f, slug: e.target.value }));
             }}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 font-mono text-sm outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Cor principal</label>
+          <label htmlFor="company-color" className="text-sm text-[var(--text-muted)]">
+            Cor principal
+          </label>
           <div className="flex items-center gap-2">
             <input
               type="color"
+              aria-label="Selecionar cor principal"
               value={form.primaryColor}
               onChange={(e) => setForm((f) => ({ ...f, primaryColor: e.target.value }))}
-              className="h-10 w-14 cursor-pointer rounded-lg border border-slate-700 bg-slate-950"
+              className="h-10 w-14 cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg)]"
             />
             <input
+              id="company-color"
               value={form.primaryColor}
               onChange={(e) => setForm((f) => ({ ...f, primaryColor: e.target.value }))}
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm outline-none focus:border-indigo-400"
+              className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 font-mono text-sm outline-none focus:border-[var(--platform-accent)]"
             />
           </div>
         </div>
 
-        <hr className="my-2 border-slate-800" />
+        <hr className="my-2 border-[var(--border)]" />
         <p className="text-sm font-medium">Primeiro acesso (administrador da empresa)</p>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Nome do administrador</label>
+          <label htmlFor="admin-name" className="text-sm text-[var(--text-muted)]">
+            Nome do administrador
+          </label>
           <input
+            id="admin-name"
             required
             placeholder="Nome completo"
             value={form.adminName}
             onChange={(e) => setForm((f) => ({ ...f, adminName: e.target.value }))}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">E-mail do administrador</label>
+          <label htmlFor="admin-email" className="text-sm text-[var(--text-muted)]">
+            E-mail do administrador
+          </label>
           <input
+            id="admin-email"
             required
             type="email"
+            autoComplete="email"
             placeholder="admin@empresa.com"
             value={form.adminEmail}
             onChange={(e) => setForm((f) => ({ ...f, adminEmail: e.target.value }))}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Senha do administrador</label>
+          <label htmlFor="admin-password" className="text-sm text-[var(--text-muted)]">
+            Senha do administrador
+          </label>
           <input
+            id="admin-password"
             required
             type="password"
+            autoComplete="new-password"
             minLength={8}
             placeholder="Mínimo 8 caracteres"
             value={form.adminPassword}
             onChange={(e) => setForm((f) => ({ ...f, adminPassword: e.target.value }))}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
@@ -166,7 +192,7 @@ export function CreateCompanyPage() {
         <button
           type="submit"
           disabled={createCompany.isPending}
-          className="mt-2 rounded-lg bg-indigo-500 px-4 py-2 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="mt-2 rounded-lg bg-[var(--platform-accent)] px-4 py-2 font-medium text-[var(--platform-accent-foreground)] transition hover:opacity-90 disabled:opacity-50"
         >
           {createCompany.isPending ? 'Criando...' : 'Criar empresa'}
         </button>

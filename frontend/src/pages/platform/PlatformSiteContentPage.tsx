@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { platformApi } from '../../lib/platformApi';
 import { ImageUploadField } from '../../components/ImageUploadField';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 interface SiteContent {
   id: string;
@@ -50,18 +51,26 @@ export function PlatformSiteContentPage() {
   }
 
   if (!form) {
-    return <p className="text-slate-400">Carregando...</p>;
+    return (
+      <div className="max-w-xl space-y-3">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
   }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold">Site institucional</h1>
-      <p className="mt-1 text-slate-400">
+      <p className="mt-1 text-[var(--text-muted)]">
         Textos e logo mostrados em argramtech.com.br. O título principal do hero não é editável aqui — tem um efeito
         visual fixo no HTML.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 grid max-w-xl gap-4 rounded-xl border border-slate-800 bg-slate-900 p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-6 grid max-w-xl gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+      >
         <ImageUploadField
           label="Logo"
           value={form.logoUrl}
@@ -71,48 +80,63 @@ export function PlatformSiteContentPage() {
         />
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Frase de destaque (acima do título)</label>
+          <label htmlFor="hero-eyebrow" className="text-sm text-[var(--text-muted)]">
+            Frase de destaque (acima do título)
+          </label>
           <input
+            id="hero-eyebrow"
             value={form.heroEyebrow}
             onChange={(e) => setForm((f) => f && { ...f, heroEyebrow: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Texto do hero</label>
+          <label htmlFor="hero-text" className="text-sm text-[var(--text-muted)]">
+            Texto do hero
+          </label>
           <textarea
+            id="hero-text"
             value={form.heroText}
             onChange={(e) => setForm((f) => f && { ...f, heroText: e.target.value })}
             rows={3}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Botão principal</label>
+          <label htmlFor="hero-cta-primary" className="text-sm text-[var(--text-muted)]">
+            Botão principal
+          </label>
           <input
+            id="hero-cta-primary"
             value={form.heroCtaPrimaryLabel}
             onChange={(e) => setForm((f) => f && { ...f, heroCtaPrimaryLabel: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Botão secundário</label>
+          <label htmlFor="hero-cta-secondary" className="text-sm text-[var(--text-muted)]">
+            Botão secundário
+          </label>
           <input
+            id="hero-cta-secondary"
             value={form.heroCtaSecondaryLabel}
             onChange={(e) => setForm((f) => f && { ...f, heroCtaSecondaryLabel: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-400">Frase do rodapé</label>
+          <label htmlFor="footer-tagline" className="text-sm text-[var(--text-muted)]">
+            Frase do rodapé
+          </label>
           <input
+            id="footer-tagline"
             value={form.footerTagline}
             onChange={(e) => setForm((f) => f && { ...f, footerTagline: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 outline-none focus:border-indigo-400"
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--platform-accent)]"
           />
         </div>
 
@@ -122,7 +146,7 @@ export function PlatformSiteContentPage() {
         <button
           type="submit"
           disabled={saveMutation.isPending}
-          className="mt-2 rounded-lg bg-indigo-500 px-4 py-2 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="mt-2 rounded-lg bg-[var(--platform-accent)] px-4 py-2 font-medium text-[var(--platform-accent-foreground)] transition hover:opacity-90 disabled:opacity-50"
         >
           {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
         </button>

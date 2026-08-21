@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { platformApi } from '../../lib/platformApi';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 interface PlatformCompany {
   id: string;
@@ -20,22 +21,22 @@ export function PlatformCompaniesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Empresas</h1>
-          <p className="mt-1 text-slate-400">Empresas clientes cadastradas na plataforma.</p>
+          <p className="mt-1 text-[var(--text-muted)]">Empresas clientes cadastradas na plataforma.</p>
         </div>
         <Link
           to="/plataforma/empresas/nova"
-          className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--platform-accent)] px-4 py-2 text-sm font-medium text-[var(--platform-accent-foreground)] transition hover:opacity-90"
         >
           + Nova empresa
         </Link>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl border border-slate-800">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-900 text-slate-400">
+          <thead className="bg-[var(--surface)] text-[var(--text-muted)]">
             <tr>
               <th className="px-4 py-3">Empresa</th>
               <th className="px-4 py-3">Slug</th>
@@ -46,13 +47,20 @@ export function PlatformCompaniesPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
-                  Carregando...
+                <td colSpan={4} className="px-4 py-4">
+                  <Skeleton className="h-5 w-full" />
+                </td>
+              </tr>
+            )}
+            {!isLoading && companies?.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-6 text-center text-[var(--text-muted)]">
+                  Nenhuma empresa cadastrada ainda.
                 </td>
               </tr>
             )}
             {companies?.map((company) => (
-              <tr key={company.id} className="border-t border-slate-800">
+              <tr key={company.id} className="border-t border-[var(--border)]">
                 <td className="flex items-center gap-2 px-4 py-3">
                   {company.logoUrl ? (
                     <img src={company.logoUrl} alt={company.name} className="h-6 w-6 rounded object-cover" />
@@ -66,7 +74,7 @@ export function PlatformCompaniesPage() {
                   )}
                   {company.name}
                 </td>
-                <td className="px-4 py-3 font-mono text-slate-400">{company.slug}</td>
+                <td className="px-4 py-3 font-mono text-[var(--text-muted)]">{company.slug}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
@@ -76,7 +84,9 @@ export function PlatformCompaniesPage() {
                     {company.active ? 'Ativa' : 'Inativa'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-400">{new Date(company.createdAt).toLocaleDateString('pt-BR')}</td>
+                <td className="px-4 py-3 text-[var(--text-muted)]">
+                  {new Date(company.createdAt).toLocaleDateString('pt-BR')}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -33,6 +33,15 @@ export interface Company {
   active: boolean;
 }
 
+// Retorno de GET /users/me — identidade global da pessoa (não muda por
+// empresa), usado na tela "Meu perfil".
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+}
+
 export interface AuthSession {
   accessToken: string;
   refreshToken: string;

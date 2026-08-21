@@ -27,6 +27,7 @@ import { OrdersListPage } from './pages/site/OrdersListPage';
 import { GroupOrderPage } from './pages/site/GroupOrderPage';
 import { LoyaltyPage } from './pages/site/LoyaltyPage';
 import { NotificationsPage } from './pages/site/NotificationsPage';
+import { ProfilePage } from './pages/site/ProfilePage';
 import { KitchenPage } from './pages/staff/KitchenPage';
 import { DriverPage } from './pages/staff/DriverPage';
 
@@ -74,6 +75,7 @@ export function App() {
             <Route path="pedido-em-grupo/:code" element={<GroupOrderPage />} />
             <Route path="fidelidade" element={<LoyaltyPage />} />
             <Route path="notificacoes" element={<NotificationsPage />} />
+            <Route path="perfil" element={<ProfilePage />} />
           </Route>
         </Route>
 

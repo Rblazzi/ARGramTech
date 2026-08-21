@@ -16,6 +16,13 @@ export class UsersService {
     return user;
   }
 
+  // Autoatendimento: a pessoa altera o próprio nome/telefone. Nunca por
+  // id de outra pessoa — o id vem sempre do token (request.user.id), não
+  // de parâmetro de rota.
+  updateProfile(id: string, data: { name?: string; phone?: string }) {
+    return this.prisma.user.update({ where: { id }, data });
+  }
+
   // Cria (ou atualiza) só a identidade global do usuário — sem role, sem
   // vínculo com empresa nenhuma. O papel dele em cada empresa vive em
   // CompanyMembership (ver ensureMembership).

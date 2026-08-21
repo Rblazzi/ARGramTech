@@ -63,9 +63,16 @@ export function SiteLayout() {
             )}
 
             {user ? (
-              <button onClick={logout} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
-                Sair ({user.name.split(' ')[0]})
-              </button>
+              <>
+                {isCustomer && (
+                  <Link to={cp('/perfil')} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
+                    Perfil
+                  </Link>
+                )}
+                <button onClick={logout} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
+                  Sair ({user.name.split(' ')[0]})
+                </button>
+              </>
             ) : (
               <Link to={cp('/login')} className="text-sm text-[var(--brand)] hover:underline">
                 Entrar

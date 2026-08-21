@@ -55,21 +55,6 @@ export function AdminLayout() {
     </nav>
   );
 
-  // Link pro painel do dono do sistema — de propósito um <a> absoluto
-  // (não cp()/<NavLink>), porque /plataforma fica FORA do namespace desta
-  // empresa e tem sessão própria (ver PlatformAuthContext). Visualmente
-  // separado do resto do menu pra nunca confundir com algo desta empresa.
-  const platformLinkBlock = user?.isPlatformAdmin && (
-    <div className="border-t border-[var(--border)] p-3">
-      <a
-        href="/plataforma"
-        className="flex items-center justify-center rounded-lg border border-dashed border-[var(--border)] px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
-      >
-        Painel da plataforma →
-      </a>
-    </div>
-  );
-
   const userBlock = (
     <div className="border-t border-[var(--border)] p-3">
       <p className="truncate px-2 text-sm text-[var(--text)]">{user?.name}</p>
@@ -112,7 +97,6 @@ export function AdminLayout() {
       >
         {brandBlock}
         {navBlock}
-        {platformLinkBlock}
         {userBlock}
       </aside>
 

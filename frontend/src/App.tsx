@@ -11,6 +11,8 @@ import { CouponsPage } from './pages/admin/CouponsPage';
 import { PromotionsPage } from './pages/admin/PromotionsPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { CompanySettingsPage } from './pages/admin/CompanySettingsPage';
+import { StaffPage } from './pages/admin/StaffPage';
+import { DriversPage } from './pages/admin/DriversPage';
 import { PlatformProtectedRoute } from './components/platform/PlatformProtectedRoute';
 import { PlatformLayout } from './components/platform/PlatformLayout';
 import { PlatformLoginPage } from './pages/platform/PlatformLoginPage';
@@ -88,6 +90,8 @@ export function App() {
             <Route path="cupons" element={<CouponsPage />} />
             <Route path="promocoes" element={<PromotionsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
+            <Route path="usuarios" element={<StaffPage />} />
+            <Route path="entregadores" element={<DriversPage />} />
             <Route path="configuracoes" element={<CompanySettingsPage />} />
           </Route>
         </Route>

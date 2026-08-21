@@ -11,6 +11,7 @@ const emptyForm = { categoryId: '', name: '', price: '', internalCode: '', descr
 export function ProductsPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { data: products, isLoading } = useQuery({
@@ -36,6 +37,20 @@ export function ProductsPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: typeof emptyForm }) =>
+      api.patch(`/products/${id}`, { ...payload, price: Number(payload.price) }),
+    onSuccess: () => {
+      setForm(emptyForm);
+      setEditingId(null);
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ['products', 'admin'] });
+    },
+    onError: (err) => {
+      setError(isAxiosError(err) ? err.response?.data?.message ?? 'Erro ao salvar produto' : 'Erro ao salvar produto');
+    },
+  });
+
   const toggleActiveMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => api.patch(`/products/${id}`, { active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products', 'admin'] }),
@@ -46,10 +61,35 @@ export function ProductsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products', 'admin'] }),
   });
 
-  function handleCreate(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    createMutation.mutate(form);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, payload: form });
+    } else {
+      createMutation.mutate(form);
+    }
   }
+
+  function startEdit(product: Product) {
+    setEditingId(product.id);
+    setForm({
+      categoryId: product.categoryId,
+      name: product.name,
+      price: product.price,
+      internalCode: product.internalCode,
+      description: product.description ?? '',
+      imageUrl: product.imageUrl ?? '',
+    });
+    setError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setError(null);
+  }
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div>
@@ -59,7 +99,7 @@ export function ProductsPage() {
         página de detalhe do produto, na próxima etapa.
       </p>
 
-      <form onSubmit={handleCreate} className="mt-6 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="mt-6 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-2">
         <select
           required
           value={form.categoryId}
@@ -120,13 +160,24 @@ export function ProductsPage() {
 
         {error && <p className="text-sm text-red-400 sm:col-span-2">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={createMutation.isPending}
-          className="rounded-lg bg-[var(--brand)] px-4 py-2 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 disabled:opacity-50 sm:col-span-2"
-        >
-          Adicionar produto
-        </button>
+        <div className="flex gap-2 sm:col-span-2">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="rounded-lg bg-[var(--brand)] px-4 py-2 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 disabled:opacity-50"
+          >
+            {isSaving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Adicionar produto'}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="rounded-lg border border-[var(--border)] px-4 py-2 text-[var(--text-muted)] transition hover:bg-[var(--surface-hover)]"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--border)]">
@@ -145,6 +196,13 @@ export function ProductsPage() {
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
                   Carregando...
+                </td>
+              </tr>
+            )}
+            {!isLoading && products?.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
+                  Nenhum produto cadastrado ainda.
                 </td>
               </tr>
             )}
@@ -174,6 +232,9 @@ export function ProductsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
+                  <button onClick={() => startEdit(product)} className="mr-3 text-[var(--brand)] hover:underline">
+                    Editar
+                  </button>
                   <button
                     onClick={() => toggleActiveMutation.mutate({ id: product.id, active: !product.active })}
                     className="mr-3 text-[var(--brand)] hover:underline"

@@ -1,5 +1,25 @@
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'ATTENDANT' | 'KITCHEN' | 'DRIVER' | 'MANAGER';
 
+export type StaffRole = 'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'KITCHEN';
+
+// Retorno de GET /staff — pessoa com acesso ao painel da empresa
+// (não inclui clientes nem entregadores, que têm telas próprias).
+export interface StaffMember {
+  id: string; // id da CompanyMembership
+  role: StaffRole;
+  active: boolean;
+  user: { id: string; name: string; email: string; phone: string | null; active: boolean };
+}
+
+// Retorno de GET /delivery-drivers.
+export interface Driver {
+  id: string; // id da CompanyMembership
+  vehicleType: string | null;
+  vehiclePlate: string | null;
+  active: boolean;
+  membership: { user: { name: string; email: string; phone: string | null; active: boolean } };
+}
+
 export interface AuthenticatedUser {
   id: string;
   email: string;

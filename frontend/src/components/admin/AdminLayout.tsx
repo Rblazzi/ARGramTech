@@ -11,8 +11,13 @@ const NAV_ITEMS = [
   { to: '/admin/cupons', label: 'Cupons' },
   { to: '/admin/promocoes', label: 'Promoções' },
   { to: '/admin/relatorios', label: 'Relatórios' },
+  { to: '/admin/entregadores', label: 'Entregadores' },
   { to: '/admin/configuracoes', label: 'Configurações' },
 ];
+
+// Só ADMIN gerencia outros usuários (ver StaffController no backend —
+// restrito a ADMIN, diferente do resto que também libera MANAGER).
+const ADMIN_ONLY_NAV_ITEMS = [{ to: '/admin/usuarios', label: 'Usuários' }];
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
@@ -33,9 +38,11 @@ export function AdminLayout() {
     </div>
   );
 
+  const visibleNavItems = user?.role === 'ADMIN' ? [...NAV_ITEMS, ...ADMIN_ONLY_NAV_ITEMS] : NAV_ITEMS;
+
   const navBlock = (
     <nav className="flex flex-1 flex-col gap-1 p-3">
-      {NAV_ITEMS.map((item) => (
+      {visibleNavItems.map((item) => (
         <NavLink
           key={item.to}
           to={cp(item.to)}

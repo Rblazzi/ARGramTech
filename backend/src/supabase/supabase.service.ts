@@ -38,10 +38,17 @@ export class SupabaseService {
     this.jwks = createRemoteJWKSet(new URL(`${url}/auth/v1/.well-known/jwks.json`));
   }
 
-  // Verifica a assinatura e a validade (expiração) de um access token
-  // emitido pelo Supabase Auth. Lança se o token for inválido/expirado.
+  // Verifica a assinatura, expiração, emissor e audiência de um access
+  // token emitido pelo Supabase Auth. Lança se o token for
+  // inválido/expirado ou não tiver sido emitido para este projeto —
+  // sem pinar iss/aud, qualquer token assinado pela mesma chave do
+  // projeto passaria, mesmo que emitido para outro propósito.
   async verifyAccessToken(token: string): Promise<JWTPayload> {
-    const { payload } = await jwtVerify(token, this.jwks);
+    const url = this.config.get<string>('SUPABASE_URL')!;
+    const { payload } = await jwtVerify(token, this.jwks, {
+      issuer: `${url}/auth/v1`,
+      audience: 'authenticated',
+    });
     return payload;
   }
 }

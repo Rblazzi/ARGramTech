@@ -7,6 +7,12 @@ import { createClient } from '@supabase/supabase-js';
 // - uma conta de teste por setor (role), vinculada a ela
 // - categorias básicas do cardápio
 async function main() {
+  // Este seed cria contas de teste com senhas fracas e conhecidas
+  // (admin123456 etc.) — nunca deve rodar contra o banco de produção.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Seed bloqueado: NODE_ENV=production. Isso criaria contas de teste com senha conhecida.');
+  }
+
   const prisma = new PrismaClient();
   const supabaseAdmin = createClient(
     process.env.SUPABASE_URL!,

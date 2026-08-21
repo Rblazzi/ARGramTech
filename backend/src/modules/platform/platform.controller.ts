@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { User } from '@prisma/client';
 import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
 import { CurrentPlatformUser } from '../../common/decorators/current-platform-user.decorator';
 import { CreateCompanyDto } from '../companies/dto/create-company.dto';
-import { UploadsService } from '../uploads/uploads.service';
+import { UploadsService, MAX_UPLOAD_SIZE_BYTES } from '../uploads/uploads.service';
 import { PlatformService } from './platform.service';
 import { PlatformLoginDto } from './dto/platform-login.dto';
 import { UpdateSiteContentDto } from './dto/update-site-content.dto';
@@ -16,6 +17,11 @@ export class PlatformController {
     private readonly uploadsService: UploadsService,
   ) {}
 
+  // Mesmo limite de tentativas do login por empresa (auth.controller.ts)
+  // — essa é a credencial mais poderosa do sistema (cria empresas, edita
+  // o site institucional), merece pelo menos a mesma proteção contra
+  // força bruta.
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @Post('login')
   login(@Body() dto: PlatformLoginDto) {
     return this.platformService.login(dto);
@@ -56,7 +62,7 @@ export class PlatformController {
   // institucional) — pasta separada da de qualquer empresa.
   @UseGuards(PlatformAdminGuard)
   @Post('uploads/image')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_SIZE_BYTES } }))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
     const url = await this.uploadsService.uploadImage(file, 'platform/site-content');
     return { url };

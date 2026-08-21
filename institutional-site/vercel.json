@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://ar-gram-tech-blazzis-projects.vercel.app/$1"
+    }
+  ]
+}

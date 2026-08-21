@@ -1,6 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { CurrentCompany } from '../../common/decorators/current-company.decorator';
+import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
 import { CompaniesService } from './companies.service';
+import { CreateCompanyDto } from './dto/create-company.dto';
 
 @Controller('companies')
 export class CompaniesController {
@@ -12,5 +14,11 @@ export class CompaniesController {
   @Get('resolve')
   resolve(@CurrentCompany() companyId: string) {
     return this.companiesService.resolveCurrent(companyId);
+  }
+
+  @UseGuards(PlatformAdminGuard)
+  @Post()
+  create(@Body() dto: CreateCompanyDto) {
+    return this.companiesService.create(dto);
   }
 }

@@ -75,6 +75,10 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'payments/webhook/(.*)', method: RequestMethod.ALL },
         { path: 'promotions/cron-trigger', method: RequestMethod.ALL },
+        // Criar empresa é ação de plataforma, não de uma empresa
+        // específica — não faz sentido exigir (nem tentar resolver) um
+        // tenant aqui (ver PlatformAdminGuard).
+        { path: 'companies', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

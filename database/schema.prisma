@@ -178,14 +178,19 @@ enum CartStatus {
 // (login), compartilhada entre todas as empresas da plataforma — o
 // papel/role de cada pessoa é por empresa, ver CompanyMembership.
 model User {
-  id        String    @id @db.Uuid
-  email     String    @unique
-  phone     String?
-  name      String
-  active    Boolean   @default(true)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id              String    @id @db.Uuid
+  email           String    @unique
+  phone           String?
+  name            String
+  active          Boolean   @default(true)
+  // Dono/operador da plataforma (não de uma empresa específica) — só
+  // quem tem isso pode cadastrar novas empresas. Fica no User (identidade
+  // global) e não numa CompanyMembership de propósito: não é um papel
+  // dentro de uma empresa, é acima de todas elas.
+  isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   memberships   CompanyMembership[]
   statusChanges OrderStatusHistory[]

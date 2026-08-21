@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { ResetPasswordButton } from '../../components/admin/ResetPasswordButton';
+import { TableSkeletonRows } from '../../components/ui/TableSkeletonRows';
 import type { StaffMember, StaffRole } from '../../types';
 
 const ROLE_LABELS: Record<StaffRole, string> = {
@@ -127,13 +128,7 @@ export function StaffPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
-                  Carregando...
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} />}
             {!isLoading && staff?.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">

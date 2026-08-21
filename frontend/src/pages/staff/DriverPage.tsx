@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { LocationMap } from '../../components/LocationMap';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Address, Delivery } from '../../types';
 
 function formatPrice(value: string) {
@@ -127,7 +128,8 @@ export function DriverPage() {
         <section>
           <h2 className="mb-3 font-medium">Minhas entregas em andamento</h2>
           <div className="flex flex-col gap-3">
-            {loadingMine && <p className="text-sm text-[var(--text-muted)]">Carregando...</p>}
+            {loadingMine &&
+              Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
             {!loadingMine && activeMine.length === 0 && (
               <p className="text-sm text-[var(--text-muted)]">Nenhuma entrega em andamento.</p>
             )}
@@ -174,7 +176,8 @@ export function DriverPage() {
         <section>
           <h2 className="mb-3 font-medium">Entregas disponíveis</h2>
           <div className="flex flex-col gap-3">
-            {loadingAvailable && <p className="text-sm text-[var(--text-muted)]">Carregando...</p>}
+            {loadingAvailable &&
+              Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
             {!loadingAvailable && available?.length === 0 && (
               <p className="text-sm text-[var(--text-muted)]">Nenhuma entrega disponível no momento.</p>
             )}

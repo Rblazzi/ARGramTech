@@ -6,6 +6,7 @@ import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useCart } from '../../hooks/useCart';
 import { useCompanyPath } from '../../contexts/CompanyContext';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Address, Order, OrderType, PaymentMethod } from '../../types';
 
 function formatPrice(value: number) {
@@ -91,7 +92,16 @@ export function CheckoutPage() {
     createOrder.mutate();
   }
 
-  if (cartQuery.isLoading) return <p className="text-[var(--text-muted)]">Carregando...</p>;
+  if (cartQuery.isLoading) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   if (!cart || cart.items.length === 0) {
     return (

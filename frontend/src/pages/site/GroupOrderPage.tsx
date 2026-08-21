@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import QRCode from 'qrcode';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Address, GroupOrderView, OrderType } from '../../types';
 
 function formatPrice(value: number) {
@@ -83,7 +84,16 @@ export function GroupOrderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group?.status, isMember, user]);
 
-  if (isLoading || !group) return <p className="text-[var(--text-muted)]">Carregando...</p>;
+  if (isLoading || !group) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   const isOwner = group.ownerCustomerId === user?.id;
   const me = group.members.find((m) => m.customerId === user?.id);

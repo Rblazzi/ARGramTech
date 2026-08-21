@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useCompany } from '../../contexts/CompanyContext';
 import { ImageUploadField } from '../../components/ImageUploadField';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Company } from '../../types';
 
 type SettingsForm = Pick<
@@ -55,7 +56,12 @@ export function CompanySettingsPage() {
   }
 
   if (!form) {
-    return <p className="text-[var(--text-muted)]">Carregando...</p>;
+    return (
+      <div className="max-w-xl space-y-3">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
   return (

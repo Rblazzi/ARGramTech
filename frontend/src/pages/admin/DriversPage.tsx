@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { ResetPasswordButton } from '../../components/admin/ResetPasswordButton';
+import { TableSkeletonRows } from '../../components/ui/TableSkeletonRows';
 import type { Driver } from '../../types';
 
 const emptyForm = { name: '', email: '', password: '', phone: '', vehicleType: '', vehiclePlate: '' };
@@ -118,13 +119,7 @@ export function DriversPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
-                  Carregando...
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} />}
             {!isLoading && drivers?.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">

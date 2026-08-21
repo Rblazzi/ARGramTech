@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { AppNotification } from '../../types';
 
 export function NotificationsPage() {
@@ -10,9 +11,10 @@ export function NotificationsPage() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-3">
-      <h1 className="text-2xl font-semibold">Notificações</h1>
+      <h1 className="font-display text-2xl font-medium">Notificações</h1>
 
-      {isLoading && <p className="text-[var(--text-muted)]">Carregando...</p>}
+      {isLoading &&
+        Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
       {!isLoading && notifications?.length === 0 && (
         <p className="text-[var(--text-muted)]">Você ainda não recebeu nenhuma notificação.</p>
       )}

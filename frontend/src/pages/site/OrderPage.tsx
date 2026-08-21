@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { useCompanyPath } from '../../contexts/CompanyContext';
 import { ORDER_STATUS_FLOW, ORDER_STATUS_LABELS } from '../../lib/orderStatus';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Order } from '../../types';
 
 function formatPrice(value: string) {
@@ -56,7 +57,17 @@ export function OrderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payment?.id, payment?.status, payment?.pixCopyPaste]);
 
-  if (isLoading || !order) return <p className="text-[var(--text-muted)]">Carregando pedido...</p>;
+  if (isLoading || !order) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+        <Skeleton className="h-12 w-32" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
 
   const isCancelled = order.status === 'CANCELLED';
   const currentStepIndex = ORDER_STATUS_FLOW.indexOf(order.status);

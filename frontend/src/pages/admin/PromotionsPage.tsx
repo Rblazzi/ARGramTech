@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { TableSkeletonRows } from '../../components/ui/TableSkeletonRows';
 import type { Coupon, Promotion, PromotionType } from '../../types';
 
 const TYPE_LABELS: Record<PromotionType, string> = {
@@ -159,13 +160,7 @@ export function PromotionsPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
-                  Carregando...
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} />}
             {promotions?.map((promo) => (
               <tr key={promo.id} className="border-t border-[var(--border)]">
                 <td className="px-4 py-3">{promo.name}</td>

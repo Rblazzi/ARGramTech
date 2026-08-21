@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { ImageUploadField } from '../../components/ImageUploadField';
+import { TableSkeletonRows } from '../../components/ui/TableSkeletonRows';
 import type { Category, Product } from '../../types';
 
 const emptyForm = { categoryId: '', name: '', price: '', internalCode: '', description: '', imageUrl: '' };
@@ -192,13 +193,7 @@ export function ProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
-                  Carregando...
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} />}
             {!isLoading && products?.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">

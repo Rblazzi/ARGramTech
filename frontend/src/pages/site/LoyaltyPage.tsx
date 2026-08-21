@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { LoyaltySummary } from '../../types';
 
 const TIER_LABELS: Record<LoyaltySummary['tier'], string> = {
@@ -48,19 +49,28 @@ export function LoyaltyPage() {
     redeem.mutate(Number(points));
   }
 
-  if (isLoading || !data) return <p className="text-[var(--text-muted)]">Carregando...</p>;
+  if (isLoading || !data) {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col gap-6">
+        <h1 className="font-display text-2xl font-medium">Fidelidade</h1>
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   const nextThreshold = TIER_NEXT_THRESHOLD[data.tier];
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Fidelidade</h1>
+      <h1 className="font-display text-2xl font-medium">Fidelidade</h1>
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
         <p className="text-sm text-[var(--text-muted)]">Seu nível</p>
-        <p className="mt-1 text-3xl font-bold text-[var(--brand)]">{TIER_LABELS[data.tier]}</p>
+        <p className="mt-1 font-display text-3xl font-medium text-[var(--brand)]">{TIER_LABELS[data.tier]}</p>
         <p className="mt-3 text-sm text-[var(--text-muted)]">Saldo disponível</p>
-        <p className="text-2xl font-semibold">{data.balance} pontos</p>
+        <p className="font-mono text-2xl font-semibold">{data.balance} pontos</p>
         {nextThreshold && (
           <p className="mt-2 text-xs text-[var(--text-muted)]">
             Faltam {Math.max(0, nextThreshold - data.lifetimePoints)} pontos acumulados para o próximo nível

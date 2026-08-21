@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { useCompanyPath } from '../../contexts/CompanyContext';
 import { ORDER_STATUS_LABELS } from '../../lib/orderStatus';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Order } from '../../types';
 
 function formatPrice(value: string) {
@@ -16,7 +17,16 @@ export function OrdersListPage() {
     queryFn: async () => (await api.get<Order[]>('/orders')).data,
   });
 
-  if (isLoading) return <p className="text-[var(--text-muted)]">Carregando pedidos...</p>;
+  if (isLoading) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-3">
+        <Skeleton className="h-8 w-40" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
 
   if (!orders || orders.length === 0) {
     return (

@@ -1,13 +1,14 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { usePlatformAuth } from '../../contexts/PlatformAuthContext';
+import { Spinner } from '../ui/Spinner';
 
 export function PlatformProtectedRoute() {
   const { platformUser, isLoading } = usePlatformAuth();
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--bg)] text-[var(--text-muted)]">
-        Carregando...
+      <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
+        <Spinner accentVar="--platform-accent" />
       </div>
     );
   }

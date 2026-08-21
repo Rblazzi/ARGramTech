@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCompanyPath } from '../contexts/CompanyContext';
+import { Spinner } from './ui/Spinner';
 import type { UserRole } from '../types';
 
 export function ProtectedRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
@@ -9,8 +10,8 @@ export function ProtectedRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--bg)] text-[var(--text-muted)]">
-        Carregando...
+      <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
+        <Spinner />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useNow } from '../../hooks/useNow';
 import { ORDER_STATUS_LABELS } from '../../lib/orderStatus';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Order, OrderStatus } from '../../types';
 
 const URGENT_AFTER_MINUTES = 15;
@@ -127,12 +128,13 @@ export function KitchenPage() {
     <div className="min-h-screen bg-[var(--bg)] p-6 text-[var(--text)]">
       <h1 className="mb-4 text-2xl font-semibold">Painel da Cozinha</h1>
 
-      {isLoading && <p className="text-[var(--text-muted)]">Carregando pedidos...</p>}
       {!isLoading && orders?.length === 0 && (
         <p className="text-[var(--text-muted)]">Nenhum pedido em andamento no momento.</p>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {isLoading &&
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56 w-full" />)}
         {orders?.map((order) => (
           <OrderCard key={order.id} order={order} now={now} />
         ))}

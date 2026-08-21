@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useCompany } from '../contexts/CompanyContext';
+import { Spinner } from './ui/Spinner';
 
 // Bloqueia a renderização do resto do app até a empresa ser resolvida —
 // evita que chamadas de API disparem antes do header X-Company-Slug
@@ -9,8 +10,8 @@ export function CompanyGate({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--bg)] text-[var(--text-muted)]">
-        Carregando...
+      <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
+        <Spinner />
       </div>
     );
   }

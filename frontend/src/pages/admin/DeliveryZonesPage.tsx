@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
+import { TableSkeletonRows } from '../../components/ui/TableSkeletonRows';
 import type { DeliveryZone, DeliveryZoneType } from '../../types';
 
 const TYPE_LABELS: Record<DeliveryZoneType, string> = {
@@ -189,13 +190,7 @@ export function DeliveryZonesPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">
-                  Carregando...
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} />}
             {!isLoading && zones?.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-muted)]">

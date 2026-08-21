@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { SalesReport } from '../../types';
 
 function formatPrice(value: number) {
@@ -67,7 +68,19 @@ export function ReportsPage() {
         </div>
       </div>
 
-      {isLoading && <p className="mt-6 text-[var(--text-muted)]">Carregando...</p>}
+      {isLoading && (
+        <>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </>
+      )}
 
       {report && (
         <>

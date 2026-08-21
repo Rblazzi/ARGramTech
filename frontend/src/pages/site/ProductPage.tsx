@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompanyPath } from '../../contexts/CompanyContext';
 import { useCart } from '../../hooks/useCart';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Product } from '../../types';
 
 function formatPrice(value: string | number) {
@@ -88,7 +89,15 @@ export function ProductPage() {
   }
 
   if (isLoading || !product) {
-    return <p className="text-[var(--text-muted)]">Carregando...</p>;
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Skeleton className="mb-5 aspect-video w-full" />
+        <Skeleton className="h-8 w-2/3" />
+        <Skeleton className="mt-3 h-4 w-full" />
+        <Skeleton className="mt-6 h-32 w-full" />
+        <Skeleton className="mt-4 h-14 w-full" />
+      </div>
+    );
   }
 
   return (

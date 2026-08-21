@@ -51,7 +51,7 @@ export function LoginPage() {
               {company?.name.charAt(0).toUpperCase() ?? 'L'}
             </div>
           )}
-          <h1 className="text-xl font-semibold text-[var(--text)]">{company?.name ?? 'Lanchonete Delivery'}</h1>
+          <h1 className="font-display text-xl font-medium text-[var(--text)]">{company?.name ?? 'Lanchonete Delivery'}</h1>
           <p className="text-sm text-[var(--text-muted)]">Painel administrativo</p>
         </div>
 
@@ -91,7 +91,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-lg bg-[var(--brand)] px-4 py-2 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 disabled:opacity-50"
+            className="mt-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
           >
             {isSubmitting ? 'Entrando...' : 'Entrar'}
           </button>

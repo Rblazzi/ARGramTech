@@ -23,7 +23,7 @@ export function SiteLayout() {
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to={cp('/cardapio')} className="flex items-center gap-2 font-semibold">
+          <Link to={cp('/cardapio')} className="flex items-center gap-2 font-display font-medium">
             {company?.logoUrl ? (
               <img src={company.logoUrl} alt={company.name} className="h-8 w-8 rounded-lg object-cover" />
             ) : (
@@ -31,7 +31,7 @@ export function SiteLayout() {
                 {company?.name.charAt(0).toUpperCase() ?? 'L'}
               </span>
             )}
-            <span className="truncate">{company?.name ?? 'Lanchonete Delivery'}</span>
+            <span className="truncate text-[0.95rem]">{company?.name ?? 'Lanchonete Delivery'}</span>
           </Link>
 
           <div className="flex items-center gap-4">
@@ -94,17 +94,23 @@ export function SiteLayout() {
                 key={item.to}
                 to={cp(item.to)}
                 className={({ isActive }) =>
-                  `relative flex flex-col items-center gap-0.5 py-2 text-[11px] ${
-                    isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
+                  `relative flex flex-col items-center gap-0.5 py-2 text-[11px] transition-colors ${
+                    isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] active:text-[var(--text)]'
                   }`
                 }
               >
-                <span className="text-lg leading-none">{item.icon}</span>
-                {item.label}
-                {item.showBadge && itemCount > 0 && (
-                  <span className="absolute right-1/4 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand)] text-[10px] font-semibold text-[var(--brand-foreground)]">
-                    {itemCount}
-                  </span>
+                {({ isActive }) => (
+                  <>
+                    <span className={`text-lg leading-none transition-transform ${isActive ? 'scale-110' : ''}`}>
+                      {item.icon}
+                    </span>
+                    {item.label}
+                    {item.showBadge && itemCount > 0 && (
+                      <span className="absolute right-1/4 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand)] text-[10px] font-semibold text-[var(--brand-foreground)]">
+                        {itemCount}
+                      </span>
+                    )}
+                  </>
                 )}
               </NavLink>
             ))}

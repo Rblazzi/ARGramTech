@@ -31,18 +31,20 @@ export function OrdersListPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-3">
-      <h1 className="text-2xl font-semibold">Meus pedidos</h1>
+      <h1 className="font-display text-2xl font-medium">Meus pedidos</h1>
       {orders.map((order) => (
         <Link
           key={order.id}
           to={cp(`/pedido/${order.id}`)}
-          className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]"
+          className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:-translate-y-0.5 hover:border-[var(--brand)]"
         >
           <div>
-            <p className="font-medium">Pedido #{order.orderNumber}</p>
+            <p className="font-medium">
+              Pedido <span className="font-mono">#{order.orderNumber}</span>
+            </p>
             <p className="text-sm text-[var(--text-muted)]">{ORDER_STATUS_LABELS[order.status]}</p>
           </div>
-          <p className="font-semibold">{formatPrice(order.total)}</p>
+          <p className="font-mono font-semibold">{formatPrice(order.total)}</p>
         </Link>
       ))}
     </div>

@@ -211,7 +211,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold">Meu perfil</h1>
+      <h1 className="font-display text-2xl font-medium">Meu perfil</h1>
 
       <section className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
         <h2 className="font-medium">Meus dados</h2>

@@ -47,7 +47,7 @@ export function CardapioPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Cardápio</h1>
+          <h1 className="font-display text-2xl font-medium">Cardápio</h1>
           <p className="text-[var(--text-muted)]">Escolha seus favoritos e monte seu pedido.</p>
         </div>
         {!groupCode && (
@@ -70,7 +70,14 @@ export function CardapioPage() {
       {isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-28" />
+            <div key={i} className="overflow-hidden rounded-xl border border-[var(--border)]">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="flex flex-col gap-2 p-4">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-4 w-1/3" />
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -81,19 +88,33 @@ export function CardapioPage() {
 
         return (
           <section key={category.id}>
-            <h2 className="mb-3 text-lg font-semibold">{category.name}</h2>
+            <h2 className="mb-3 font-display text-lg font-medium">{category.name}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {categoryProducts.map((product) => (
                 <Link
                   key={product.id}
                   to={cp(`/produto/${product.id}${groupCode ? `?grupo=${groupCode}` : ''}`)}
-                  className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]"
+                  className="group flex flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] transition hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-lg hover:shadow-black/20"
                 >
-                  <span className="font-medium">{product.name}</span>
-                  {product.description && (
-                    <span className="mt-1 line-clamp-2 text-sm text-[var(--text-muted)]">{product.description}</span>
-                  )}
-                  <span className="mt-3 font-semibold text-[var(--brand)]">{formatPrice(product.price)}</span>
+                  <div className="aspect-[4/3] w-full overflow-hidden bg-[var(--surface-hover)]">
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-3xl opacity-30">🍽️</div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-4">
+                    <span className="font-medium">{product.name}</span>
+                    {product.description && (
+                      <span className="mt-1 line-clamp-2 text-sm text-[var(--text-muted)]">{product.description}</span>
+                    )}
+                    <span className="mt-3 font-mono font-semibold text-[var(--brand)]">{formatPrice(product.price)}</span>
+                  </div>
                 </Link>
               ))}
             </div>

@@ -65,25 +65,42 @@ export function OrderPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
         <p className="text-sm text-[var(--text-muted)]">Pedido</p>
-        <h1 className="text-2xl font-semibold">#{order.orderNumber}</h1>
+        <h1 className="font-display text-2xl font-medium">
+          <span className="font-mono">#{order.orderNumber}</span>
+        </h1>
       </div>
 
       {!isCancelled ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center">
           {ORDER_STATUS_FLOW.map((status, index) => (
-            <span
-              key={status}
-              className={`rounded-full px-3 py-1 text-xs ${
-                index <= currentStepIndex
-                  ? 'bg-[var(--brand)] text-[var(--brand-foreground)]'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)]'
-              }`}
-            >
-              {ORDER_STATUS_LABELS[status]}
-            </span>
+            <div key={status} className="flex flex-1 items-center last:flex-none">
+              <div className="flex flex-col items-center gap-1.5">
+                <span
+                  className={`h-3 w-3 rounded-full border-2 transition-colors ${
+                    index <= currentStepIndex
+                      ? 'border-[var(--brand)] bg-[var(--brand)]'
+                      : 'border-[var(--border)] bg-[var(--surface)]'
+                  }`}
+                />
+                <span
+                  className={`hidden text-center text-[11px] sm:block ${
+                    index <= currentStepIndex ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  {ORDER_STATUS_LABELS[status]}
+                </span>
+              </div>
+              {index < ORDER_STATUS_FLOW.length - 1 && (
+                <span className={`mx-1 h-0.5 flex-1 ${index < currentStepIndex ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}`} />
+              )}
+            </div>
           ))}
         </div>
-      ) : (
+      ) : null}
+      {!isCancelled && (
+        <p className="-mt-3 text-sm font-medium text-[var(--brand)] sm:hidden">{ORDER_STATUS_LABELS[order.status]}</p>
+      )}
+      {isCancelled && (
         <span className="w-fit rounded-full bg-red-500/15 px-3 py-1 text-xs text-red-400">
           {ORDER_STATUS_LABELS.CANCELLED}
         </span>
@@ -131,7 +148,7 @@ export function OrderPage() {
             <div key={item.id} className="flex justify-between text-sm">
               <div>
                 <p>
-                  {item.quantity}x {item.product.name}
+                  <span className="font-mono">{item.quantity}x</span> {item.product.name}
                 </p>
                 {item.selectedOptions.length > 0 && (
                   <p className="text-[var(--text-muted)]">
@@ -140,7 +157,7 @@ export function OrderPage() {
                 )}
                 {item.notes && <p className="italic text-[var(--text-muted)]">"{item.notes}"</p>}
               </div>
-              <span>{formatPrice(item.subtotal)}</span>
+              <span className="font-mono">{formatPrice(item.subtotal)}</span>
             </div>
           ))}
         </div>
@@ -168,23 +185,23 @@ export function OrderPage() {
       <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="flex justify-between text-sm text-[var(--text-muted)]">
           <span>Subtotal</span>
-          <span>{formatPrice(order.subtotal)}</span>
+          <span className="font-mono">{formatPrice(order.subtotal)}</span>
         </div>
         {Number(order.discount) > 0 && (
           <div className="flex justify-between text-sm text-green-400">
             <span>Desconto</span>
-            <span>− {formatPrice(order.discount)}</span>
+            <span className="font-mono">− {formatPrice(order.discount)}</span>
           </div>
         )}
         {Number(order.deliveryFee) > 0 && (
           <div className="flex justify-between text-sm text-[var(--text-muted)]">
             <span>Taxa de entrega</span>
-            <span>{formatPrice(order.deliveryFee)}</span>
+            <span className="font-mono">{formatPrice(order.deliveryFee)}</span>
           </div>
         )}
         <div className="mt-2 flex justify-between border-t border-[var(--border)] pt-2 text-lg font-semibold">
           <span>Total</span>
-          <span>{formatPrice(order.total)}</span>
+          <span className="font-mono">{formatPrice(order.total)}</span>
         </div>
       </section>
 

@@ -93,9 +93,15 @@ export function ProductPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold">{product.name}</h1>
+      {product.imageUrl && (
+        <div className="mb-5 aspect-video w-full overflow-hidden rounded-xl bg-[var(--surface-hover)]">
+          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+        </div>
+      )}
+
+      <h1 className="font-display text-2xl font-medium">{product.name}</h1>
       {product.description && <p className="mt-1 text-[var(--text-muted)]">{product.description}</p>}
-      <p className="mt-2 text-xl font-semibold text-[var(--brand)]">{formatPrice(product.price)}</p>
+      <p className="mt-2 font-mono text-xl font-semibold text-[var(--brand)]">{formatPrice(product.price)}</p>
       {groupCode && (
         <p className="mt-2 w-fit rounded-full bg-[var(--brand)]/15 px-3 py-1 text-xs text-[var(--brand)]">
           Adicionando ao pedido em grupo {groupCode}
@@ -152,17 +158,19 @@ export function ProductPage() {
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
+            aria-label="Diminuir quantidade"
+            className="h-11 w-11 shrink-0 rounded-full border border-[var(--border)] text-lg transition active:scale-95"
           >
             −
           </button>
-          <span className="w-6 text-center">{quantity}</span>
+          <span className="w-6 text-center font-mono text-lg">{quantity}</span>
           <button
             onClick={() => setQuantity((q) => q + 1)}
-            className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
+            aria-label="Aumentar quantidade"
+            className="h-11 w-11 shrink-0 rounded-full border border-[var(--border)] text-lg transition active:scale-95"
           >
             +
           </button>
@@ -173,9 +181,10 @@ export function ProductPage() {
         <button
           onClick={handleAddToCart}
           disabled={addItem.isPending}
-          className="rounded-lg bg-[var(--brand)] px-4 py-3 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 disabled:opacity-50"
+          className="flex items-center justify-between rounded-lg bg-[var(--brand)] px-5 py-4 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
         >
-          {groupCode ? 'Adicionar ao pedido em grupo' : 'Adicionar ao carrinho'}
+          <span>{groupCode ? 'Adicionar ao pedido em grupo' : 'Adicionar ao carrinho'}</span>
+          <span className="font-mono">{formatPrice(Number(product.price) * quantity)}</span>
         </button>
       </div>
     </div>

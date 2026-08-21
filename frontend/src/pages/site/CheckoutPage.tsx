@@ -106,16 +106,19 @@ export function CheckoutPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Finalizar pedido</h1>
+      <h1 className="font-display text-2xl font-medium">Finalizar pedido</h1>
 
       <section>
-        <h2 className="mb-2 font-medium">Como você quer receber?</h2>
+        <h2 className="mb-2 flex items-center gap-2 font-medium">
+          <span className="font-mono text-xs text-[var(--brand)]">01</span>
+          Como você quer receber?
+        </h2>
         <div className="flex gap-2">
           {(['DELIVERY', 'PICKUP'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setType(t)}
-              className={`flex-1 rounded-lg border px-4 py-2 ${
+              className={`flex-1 rounded-lg border px-4 py-3 transition active:scale-[0.99] ${
                 type === t ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]' : 'border-[var(--border)] text-[var(--text-muted)]'
               }`}
             >
@@ -127,19 +130,24 @@ export function CheckoutPage() {
 
       {type === 'DELIVERY' && (
         <section>
-          <h2 className="mb-2 font-medium">Endereço de entrega</h2>
+          <h2 className="mb-2 flex items-center gap-2 font-medium">
+            <span className="font-mono text-xs text-[var(--brand)]">02</span>
+            Endereço de entrega
+          </h2>
           <div className="flex flex-col gap-2">
             {addresses?.map((address) => (
               <label
                 key={address.id}
-                className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm transition ${
+                  addressId === address.id ? 'border-[var(--brand)] bg-[var(--brand)]/10' : 'border-[var(--border)] bg-[var(--surface)]'
+                }`}
               >
                 <input
                   type="radio"
                   name="address"
                   checked={addressId === address.id}
                   onChange={() => setAddressId(address.id)}
-                  className="accent-[var(--brand)]"
+                  className="h-4 w-4 accent-[var(--brand)]"
                 />
                 {address.street}, {address.number} — {address.neighborhood}, {address.city}/{address.state}
               </label>
@@ -168,19 +176,24 @@ export function CheckoutPage() {
       )}
 
       <section>
-        <h2 className="mb-2 font-medium">Forma de pagamento</h2>
+        <h2 className="mb-2 flex items-center gap-2 font-medium">
+          <span className="font-mono text-xs text-[var(--brand)]">03</span>
+          Forma de pagamento
+        </h2>
         <div className="grid grid-cols-2 gap-2">
           {PAYMENT_OPTIONS.map((option) => (
             <label
               key={option.value}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm transition ${
+                paymentMethod === option.value ? 'border-[var(--brand)] bg-[var(--brand)]/10' : 'border-[var(--border)] bg-[var(--surface)]'
+              }`}
             >
               <input
                 type="radio"
                 name="payment"
                 checked={paymentMethod === option.value}
                 onChange={() => setPaymentMethod(option.value)}
-                className="accent-[var(--brand)]"
+                className="h-4 w-4 accent-[var(--brand)]"
               />
               {option.label}
             </label>
@@ -189,7 +202,10 @@ export function CheckoutPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 font-medium">Observações do pedido</h2>
+        <h2 className="mb-2 flex items-center gap-2 font-medium">
+          <span className="font-mono text-xs text-[var(--brand)]">04</span>
+          Observações do pedido
+        </h2>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -201,21 +217,21 @@ export function CheckoutPage() {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="flex justify-between text-sm text-[var(--text-muted)]">
           <span>Subtotal</span>
-          <span>{formatPrice(cart.subtotal)}</span>
+          <span className="font-mono">{formatPrice(cart.subtotal)}</span>
         </div>
         {cart.discount > 0 && (
           <div className="flex justify-between text-sm text-green-400">
             <span>Desconto</span>
-            <span>− {formatPrice(cart.discount)}</span>
+            <span className="font-mono">− {formatPrice(cart.discount)}</span>
           </div>
         )}
         <div className="flex justify-between text-sm text-[var(--text-muted)]">
           <span>Taxa de entrega</span>
-          <span>{deliveryFee === null ? 'Selecione o endereço' : formatPrice(deliveryFee)}</span>
+          <span className="font-mono">{deliveryFee === null ? 'Selecione o endereço' : formatPrice(deliveryFee)}</span>
         </div>
         <div className="mt-2 flex justify-between border-t border-[var(--border)] pt-2 text-lg font-semibold">
           <span>Total</span>
-          <span>{formatPrice(cart.subtotal - cart.discount + (deliveryFee ?? 0))}</span>
+          <span className="font-mono">{formatPrice(cart.subtotal - cart.discount + (deliveryFee ?? 0))}</span>
         </div>
       </div>
 
@@ -224,7 +240,7 @@ export function CheckoutPage() {
       <button
         onClick={handleConfirm}
         disabled={createOrder.isPending}
-        className="rounded-lg bg-[var(--brand)] px-4 py-3 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 disabled:opacity-50"
+        className="rounded-lg bg-[var(--brand)] px-4 py-3.5 font-medium text-[var(--brand-foreground)] transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
       >
         {createOrder.isPending ? 'Confirmando...' : 'Confirmar pedido'}
       </button>

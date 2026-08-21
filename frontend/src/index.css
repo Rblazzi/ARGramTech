@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Trio tipográfico compartilhado com o site institucional (mesma
+   identidade ArgramTech): Unbounded pra títulos (uso pontual, via
+   classe utilitária "font-display"), Manrope pro corpo, JetBrains Mono
+   pra números/dados (preço, quantidade, nº de pedido, status) — os
+   mesmos papéis que já usamos no painel/mockup do site. */
+@theme {
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Unbounded', 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
 /* Tema base (fundo escuro). --brand/--brand-secondary vêm da empresa
    atual e são sobrescritas em runtime pelo CompanyContext assim que a
    empresa é resolvida — cada empresa tem sua própria cor sem precisar
@@ -37,6 +48,6 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Segoe UI', system-ui, Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }

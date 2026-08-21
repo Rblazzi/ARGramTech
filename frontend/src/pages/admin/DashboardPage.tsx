@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { SalesReport } from '../../types';
 
 function formatPrice(value: number) {
@@ -35,7 +36,7 @@ export function DashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Olá, {user?.name}</h1>
           <p className="mt-1 text-[var(--text-muted)]">Resumo de hoje. Para outros períodos, veja os relatórios completos.</p>
@@ -47,16 +48,23 @@ export function DashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: 'Vendas hoje', value: isLoading ? '—' : formatPrice(report?.totalRevenue ?? 0) },
-          { label: 'Pedidos em andamento', value: isLoading ? '—' : String(inProgress) },
-          { label: 'Ticket médio', value: isLoading ? '—' : formatPrice(report?.averageTicket ?? 0) },
+          { label: 'Vendas hoje', value: formatPrice(report?.totalRevenue ?? 0) },
+          { label: 'Pedidos em andamento', value: String(inProgress) },
+          { label: 'Ticket médio', value: formatPrice(report?.averageTicket ?? 0) },
         ].map((card) => (
           <div key={card.label} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
             <p className="text-sm text-[var(--text-muted)]">{card.label}</p>
-            <p className="mt-2 text-2xl font-semibold">{card.value}</p>
+            {isLoading ? <Skeleton className="mt-2 h-8 w-24" /> : <p className="mt-2 text-2xl font-semibold">{card.value}</p>}
           </div>
         ))}
       </div>
+
+      {isLoading && (
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
+      )}
 
       {report && (
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

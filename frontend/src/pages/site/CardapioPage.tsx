@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { Category, GroupOrderView, Product } from '../../types';
 
 function formatPrice(value: string | number) {
@@ -64,7 +65,13 @@ export function CardapioPage() {
         </p>
       )}
 
-      {isLoading && <p className="text-[var(--text-muted)]">Carregando cardápio...</p>}
+      {isLoading && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
+        </div>
+      )}
 
       {categories?.map((category) => {
         const categoryProducts = products?.filter((p) => p.categoryId === category.id) ?? [];
@@ -73,7 +80,7 @@ export function CardapioPage() {
         return (
           <section key={category.id}>
             <h2 className="mb-3 text-lg font-semibold">{category.name}</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {categoryProducts.map((product) => (
                 <Link
                   key={product.id}

@@ -64,14 +64,14 @@ export function CartPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => updateItem.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
-                  className="h-8 w-8 rounded-lg border border-[var(--border)]"
+                  className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
                 >
                   −
                 </button>
                 <span className="w-6 text-center">{item.quantity}</span>
                 <button
                   onClick={() => updateItem.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
-                  className="h-8 w-8 rounded-lg border border-[var(--border)]"
+                  className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
                 >
                   +
                 </button>

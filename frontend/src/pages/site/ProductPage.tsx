@@ -24,10 +24,11 @@ export function ProductPage() {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, isError } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => (await api.get<Product>(`/products/${id}`)).data,
     enabled: Boolean(id),
+    retry: false,
   });
 
   function toggleOption(groupId: string, itemId: string, single: boolean, maxSelect: number) {
@@ -71,6 +72,17 @@ export function ProductPage() {
     } catch (err) {
       setError(isAxiosError(err) ? err.response?.data?.message ?? 'Não foi possível adicionar o item' : 'Erro inesperado');
     }
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <p className="text-lg font-medium">Produto não encontrado</p>
+        <button onClick={() => navigate('/cardapio')} className="text-[var(--brand)] hover:underline">
+          Voltar ao cardápio
+        </button>
+      </div>
+    );
   }
 
   if (isLoading || !product) {
@@ -141,14 +153,14 @@ export function ProductPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="h-9 w-9 rounded-lg border border-[var(--border)] text-lg"
+            className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
           >
             −
           </button>
           <span className="w-6 text-center">{quantity}</span>
           <button
             onClick={() => setQuantity((q) => q + 1)}
-            className="h-9 w-9 rounded-lg border border-[var(--border)] text-lg"
+            className="h-10 w-10 rounded-lg border border-[var(--border)] text-lg"
           >
             +
           </button>

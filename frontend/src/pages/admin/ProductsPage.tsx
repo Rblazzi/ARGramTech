@@ -118,7 +118,7 @@ export function ProductsPage() {
         </button>
       </form>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-[var(--border)]">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-left text-sm">
           <thead className="bg-[var(--surface)] text-[var(--text-muted)]">
             <tr>

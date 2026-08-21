@@ -103,6 +103,7 @@ export function ReportsPage() {
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
               <h2 className="mb-3 font-medium">Produtos mais vendidos</h2>
+              <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="text-[var(--text-muted)]">
                   <tr>
@@ -128,6 +129,7 @@ export function ReportsPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
 
             <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">

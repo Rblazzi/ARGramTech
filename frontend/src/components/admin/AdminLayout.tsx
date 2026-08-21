@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompany } from '../../contexts/CompanyContext';
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', end: true },
@@ -13,15 +14,20 @@ const NAV_ITEMS = [
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
+  const { company } = useCompany();
 
   return (
     <div className="flex min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <aside className="flex w-60 flex-col border-r border-[var(--border)] bg-[var(--surface)]">
         <div className="flex items-center gap-2 border-b border-[var(--border)] px-5 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand)] font-bold text-[var(--brand-foreground)]">
-            L
-          </div>
-          <span className="font-semibold">Lanchonete</span>
+          {company?.logoUrl ? (
+            <img src={company.logoUrl} alt={company.name} className="h-8 w-8 rounded-lg object-cover" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand)] font-bold text-[var(--brand-foreground)]">
+              {company?.name.charAt(0).toUpperCase() ?? 'L'}
+            </div>
+          )}
+          <span className="truncate font-semibold">{company?.name ?? 'Lanchonete'}</span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 p-3">

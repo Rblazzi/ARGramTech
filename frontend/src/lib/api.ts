@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { tokenStorage } from './tokenStorage';
+import { getCurrentCompanySlug } from './companyState';
 import type { AuthSession } from '../types';
 
 export const api = axios.create({
@@ -11,6 +12,12 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const companySlug = getCurrentCompanySlug();
+  if (companySlug && !config.headers['X-Company-Slug']) {
+    config.headers['X-Company-Slug'] = companySlug;
+  }
+
   return config;
 });
 
@@ -28,9 +35,12 @@ async function refreshAccessToken(): Promise<string> {
   const refreshToken = tokenStorage.getRefreshToken();
   if (!refreshToken) throw new Error('Sem refresh token');
 
-  const { data } = await axios.post<AuthSession>(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
-    refreshToken,
-  });
+  const companySlug = getCurrentCompanySlug();
+  const { data } = await axios.post<AuthSession>(
+    `${import.meta.env.VITE_API_URL}/auth/refresh`,
+    { refreshToken },
+    companySlug ? { headers: { 'X-Company-Slug': companySlug } } : undefined,
+  );
   tokenStorage.setTokens(data.accessToken, data.refreshToken);
   return data.accessToken;
 }

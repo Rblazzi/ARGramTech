@@ -5,6 +5,30 @@ export interface AuthenticatedUser {
   email: string;
   name: string;
   role: UserRole;
+  companyId: string;
+  membershipId: string;
+}
+
+// Dados públicos da empresa (o que dá pra mostrar antes de logar, pra
+// montar o tema da página) — ver CompaniesService.resolveCurrent no backend.
+export interface Company {
+  id: string;
+  slug: string;
+  customDomain: string | null;
+  name: string;
+  logoUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  addressText: string | null;
+  openingHours: Record<string, unknown> | null;
+  deliveryFeeDefault: string;
+  minOrderValue: string;
+  avgPrepTimeMinutes: number | null;
+  status: 'OPEN' | 'CLOSED' | 'PAUSED';
+  socialLinks: Record<string, string> | null;
+  active: boolean;
 }
 
 export interface AuthSession {
@@ -253,9 +277,9 @@ export interface Delivery {
     total: string;
     status: OrderStatus;
     address: Address | null;
-    customer: { user: { name: string; phone: string | null } };
+    customer: { membership: { user: { name: string; phone: string | null } } };
   };
-  driver: { user: { name: string; phone: string | null } } | null;
+  driver: { membership: { user: { name: string; phone: string | null } } } | null;
 }
 
 export interface Order {
@@ -281,5 +305,5 @@ export interface Order {
     expiresAt: string | null;
   }>;
   statusHistory: Array<{ id: string; status: OrderStatus; note: string | null; createdAt: string }>;
-  customer?: { user: { name: string; phone: string | null } };
+  customer?: { membership: { user: { name: string; phone: string | null } } };
 }

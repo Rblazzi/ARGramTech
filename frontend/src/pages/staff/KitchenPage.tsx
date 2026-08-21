@@ -54,7 +54,7 @@ function OrderCard({ order, now }: { order: Order; now: number }) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-lg font-bold">Pedido #{order.orderNumber}</p>
-          <p className="text-sm text-[var(--text-muted)]">{order.customer?.user.name}</p>
+          <p className="text-sm text-[var(--text-muted)]">{order.customer?.membership.user.name}</p>
         </div>
         <div className="text-right">
           <p className={`font-mono text-xl font-bold ${isUrgent ? 'text-red-400' : 'text-[var(--text)]'}`}>

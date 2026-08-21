@@ -23,6 +23,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { CompaniesModule } from './modules/companies/companies.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     LoyaltyModule,
     PromotionsModule,
     ReportsModule,
+    CompaniesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

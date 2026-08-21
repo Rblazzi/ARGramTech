@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
-/* Identidade visual da Lanchonete Delivery: fundo escuro, laranja como
-   destaque. --brand vem das configurações da loja (StoreSettings) e é
-   sobrescrita em runtime via style inline no <html>, então o admin pode
-   trocar a cor principal sem precisar de novo deploy. */
+/* Tema base (fundo escuro). --brand/--brand-secondary vêm da empresa
+   atual e são sobrescritas em runtime pelo CompanyContext assim que a
+   empresa é resolvida — cada empresa tem sua própria cor sem precisar
+   de novo deploy. Os valores abaixo são só o fallback antes disso
+   carregar. */
 :root {
   --brand: #ff7a00;
   --brand-foreground: #0a0a0a;

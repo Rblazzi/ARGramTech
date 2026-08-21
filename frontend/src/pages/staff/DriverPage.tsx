@@ -21,7 +21,7 @@ function DeliveryCard({ delivery, action }: { delivery: Delivery; action: React.
       <div className="flex items-start justify-between">
         <div>
           <p className="font-medium">Pedido #{delivery.order.orderNumber}</p>
-          <p className="text-sm text-[var(--text-muted)]">{delivery.order.customer.user.name}</p>
+          <p className="text-sm text-[var(--text-muted)]">{delivery.order.customer.membership.user.name}</p>
         </div>
         <p className="font-semibold text-[var(--brand)]">{formatPrice(delivery.order.total)}</p>
       </div>

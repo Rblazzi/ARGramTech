@@ -3,9 +3,12 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useCompany, useCompanyPath } from '../contexts/CompanyContext';
 
 export function LoginPage() {
   const { login } = useAuth();
+  const { company } = useCompany();
+  const cp = useCompanyPath();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -21,13 +24,13 @@ export function LoginPage() {
       const user = await login(email, password);
       const next = searchParams.get('next');
       if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-        navigate('/admin');
+        navigate(cp('/admin'));
       } else if (user.role === 'KITCHEN' || user.role === 'ATTENDANT') {
-        navigate('/cozinha');
+        navigate(cp('/cozinha'));
       } else if (user.role === 'DRIVER') {
-        navigate('/entregador');
+        navigate(cp('/entregador'));
       } else {
-        navigate(next || '/cardapio');
+        navigate(next || cp('/cardapio'));
       }
     } catch (err) {
       const message = isAxiosError(err) ? err.response?.data?.message : null;
@@ -41,10 +44,14 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4">
       <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-xl">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand)] text-xl font-bold text-[var(--brand-foreground)]">
-            L
-          </div>
-          <h1 className="text-xl font-semibold text-[var(--text)]">Lanchonete Delivery</h1>
+          {company?.logoUrl ? (
+            <img src={company.logoUrl} alt={company.name} className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
+          ) : (
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand)] text-xl font-bold text-[var(--brand-foreground)]">
+              {company?.name.charAt(0).toUpperCase() ?? 'L'}
+            </div>
+          )}
+          <h1 className="text-xl font-semibold text-[var(--text)]">{company?.name ?? 'Lanchonete Delivery'}</h1>
           <p className="text-sm text-[var(--text-muted)]">Painel administrativo</p>
         </div>
 
@@ -92,7 +99,7 @@ export function LoginPage() {
 
         <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
           Novo por aqui?{' '}
-          <Link to="/criar-conta" className="text-[var(--brand)] hover:underline">
+          <Link to={cp('/criar-conta')} className="text-[var(--brand)] hover:underline">
             Criar conta
           </Link>
         </p>

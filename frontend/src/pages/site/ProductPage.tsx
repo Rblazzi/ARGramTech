@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import { useCart } from '../../hooks/useCart';
 import type { Product } from '../../types';
 
@@ -17,6 +18,7 @@ export function ProductPage() {
   const groupCode = searchParams.get('grupo');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const cp = useCompanyPath();
   const { addItem } = useCart();
 
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -49,9 +51,9 @@ export function ProductPage() {
     if (!product) return;
     setError(null);
 
-    const currentPath = `/produto/${product.id}${groupCode ? `?grupo=${groupCode}` : ''}`;
+    const currentPath = cp(`/produto/${product.id}${groupCode ? `?grupo=${groupCode}` : ''}`);
     if (!user) {
-      navigate(`/login?next=${encodeURIComponent(currentPath)}`);
+      navigate(cp(`/login?next=${encodeURIComponent(currentPath)}`));
       return;
     }
 
@@ -64,10 +66,10 @@ export function ProductPage() {
           notes: notes || undefined,
           optionItemIds,
         });
-        navigate(`/pedido-em-grupo/${groupCode}`);
+        navigate(cp(`/pedido-em-grupo/${groupCode}`));
       } else {
         await addItem.mutateAsync({ productId: product.id, quantity, notes: notes || undefined, optionItemIds });
-        navigate('/carrinho');
+        navigate(cp('/carrinho'));
       }
     } catch (err) {
       setError(isAxiosError(err) ? err.response?.data?.message ?? 'Não foi possível adicionar o item' : 'Erro inesperado');
@@ -78,7 +80,7 @@ export function ProductPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="text-lg font-medium">Produto não encontrado</p>
-        <button onClick={() => navigate('/cardapio')} className="text-[var(--brand)] hover:underline">
+        <button onClick={() => navigate(cp('/cardapio'))} className="text-[var(--brand)] hover:underline">
           Voltar ao cardápio
         </button>
       </div>

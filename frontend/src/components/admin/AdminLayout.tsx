@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCompany } from '../../contexts/CompanyContext';
+import { useCompany, useCompanyPath } from '../../contexts/CompanyContext';
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', end: true },
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const { company } = useCompany();
+  const cp = useCompanyPath();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const brandBlock = (
@@ -36,7 +37,7 @@ export function AdminLayout() {
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.to}
-          to={item.to}
+          to={cp(item.to)}
           end={item.end}
           onClick={() => setIsMenuOpen(false)}
           className={({ isActive }) =>

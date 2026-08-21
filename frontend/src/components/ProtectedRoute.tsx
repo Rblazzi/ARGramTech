@@ -1,9 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCompanyPath } from '../contexts/CompanyContext';
 import type { UserRole } from '../types';
 
 export function ProtectedRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
   const { user, isLoading } = useAuth();
+  const cp = useCompanyPath();
 
   if (isLoading) {
     return (
@@ -14,7 +16,7 @@ export function ProtectedRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={cp('/login')} replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {

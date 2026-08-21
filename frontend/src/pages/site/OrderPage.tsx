@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import { ORDER_STATUS_FLOW, ORDER_STATUS_LABELS } from '../../lib/orderStatus';
 import type { Order } from '../../types';
 
@@ -19,6 +20,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function OrderPage() {
   const { id } = useParams<{ id: string }>();
+  const cp = useCompanyPath();
   const queryClient = useQueryClient();
   const hasRequestedPix = useRef(false);
 
@@ -186,7 +188,7 @@ export function OrderPage() {
         </div>
       </section>
 
-      <Link to="/pedidos" className="text-center text-[var(--brand)] hover:underline">
+      <Link to={cp('/pedidos')} className="text-center text-[var(--brand)] hover:underline">
         Ver meus pedidos
       </Link>
     </div>

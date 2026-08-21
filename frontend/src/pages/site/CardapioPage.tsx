@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import { Skeleton } from '../../components/ui/Skeleton';
 import type { Category, GroupOrderView, Product } from '../../types';
 
@@ -13,6 +14,7 @@ function formatPrice(value: string | number) {
 export function CardapioPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const cp = useCompanyPath();
   const [searchParams] = useSearchParams();
   const groupCode = searchParams.get('grupo');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -29,13 +31,13 @@ export function CardapioPage() {
 
   async function handleStartGroupOrder() {
     if (!user) {
-      navigate('/login?next=/cardapio');
+      navigate(cp(`/login?next=${encodeURIComponent(cp('/cardapio'))}`));
       return;
     }
     setIsCreatingGroup(true);
     try {
       const { data } = await api.post<GroupOrderView>('/group-orders', {});
-      navigate(`/pedido-em-grupo/${data.code}`);
+      navigate(cp(`/pedido-em-grupo/${data.code}`));
     } finally {
       setIsCreatingGroup(false);
     }
@@ -84,7 +86,7 @@ export function CardapioPage() {
               {categoryProducts.map((product) => (
                 <Link
                   key={product.id}
-                  to={`/produto/${product.id}${groupCode ? `?grupo=${groupCode}` : ''}`}
+                  to={cp(`/produto/${product.id}${groupCode ? `?grupo=${groupCode}` : ''}`)}
                   className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]"
                 >
                   <span className="font-medium">{product.name}</span>

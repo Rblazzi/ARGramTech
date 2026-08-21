@@ -3,12 +3,14 @@ import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { useCart } from '../../hooks/useCart';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 
 function formatPrice(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export function CartPage() {
+  const cp = useCompanyPath();
   const { cartQuery, updateItem, removeItem, applyCoupon, removeCoupon } = useCart();
   const [couponCode, setCouponCode] = useState('');
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export function CartPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="text-lg font-medium">Seu carrinho está vazio</p>
-        <Link to="/cardapio" className="text-[var(--brand)] hover:underline">
+        <Link to={cp('/cardapio')} className="text-[var(--brand)] hover:underline">
           Ver cardápio
         </Link>
       </div>
@@ -136,7 +138,7 @@ export function CartPage() {
       </div>
 
       <Link
-        to="/checkout"
+        to={cp('/checkout')}
         className="block rounded-lg bg-[var(--brand)] px-4 py-3 text-center font-medium text-[var(--brand-foreground)] transition hover:opacity-90"
       >
         Finalizar pedido

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import { ORDER_STATUS_LABELS } from '../../lib/orderStatus';
 import type { Order } from '../../types';
 
@@ -9,6 +10,7 @@ function formatPrice(value: string) {
 }
 
 export function OrdersListPage() {
+  const cp = useCompanyPath();
   const { data: orders, isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: async () => (await api.get<Order[]>('/orders')).data,
@@ -20,7 +22,7 @@ export function OrdersListPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="text-lg font-medium">Você ainda não fez nenhum pedido</p>
-        <Link to="/cardapio" className="text-[var(--brand)] hover:underline">
+        <Link to={cp('/cardapio')} className="text-[var(--brand)] hover:underline">
           Ver cardápio
         </Link>
       </div>
@@ -33,7 +35,7 @@ export function OrdersListPage() {
       {orders.map((order) => (
         <Link
           key={order.id}
-          to={`/pedido/${order.id}`}
+          to={cp(`/pedido/${order.id}`)}
           className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]"
         >
           <div>

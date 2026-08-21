@@ -3,9 +3,12 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useCompany, useCompanyPath } from '../contexts/CompanyContext';
 
 export function RegisterPage() {
   const { register } = useAuth();
+  const { company } = useCompany();
+  const cp = useCompanyPath();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
@@ -18,7 +21,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
     try {
       await register(form);
-      navigate(searchParams.get('next') || '/cardapio');
+      navigate(searchParams.get('next') || cp('/cardapio'));
     } catch (err) {
       const message = isAxiosError(err) ? err.response?.data?.message : null;
       setError(message ?? 'Não foi possível criar sua conta.');
@@ -31,11 +34,15 @@ export function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4">
       <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-xl">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand)] text-xl font-bold text-[var(--brand-foreground)]">
-            L
-          </div>
+          {company?.logoUrl ? (
+            <img src={company.logoUrl} alt={company.name} className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
+          ) : (
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand)] text-xl font-bold text-[var(--brand-foreground)]">
+              {company?.name.charAt(0).toUpperCase() ?? 'L'}
+            </div>
+          )}
           <h1 className="text-xl font-semibold text-[var(--text)]">Criar conta</h1>
-          <p className="text-sm text-[var(--text-muted)]">Peça seu delivery favorito</p>
+          <p className="text-sm text-[var(--text-muted)]">{company?.name ?? 'Peça seu delivery favorito'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -83,7 +90,7 @@ export function RegisterPage() {
 
         <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
           Já tem conta?{' '}
-          <Link to="/login" className="text-[var(--brand)] hover:underline">
+          <Link to={cp('/login')} className="text-[var(--brand)] hover:underline">
             Entrar
           </Link>
         </p>

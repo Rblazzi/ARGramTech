@@ -13,12 +13,16 @@ interface CompanyContextValue {
 
 const CompanyContext = createContext<CompanyContextValue | null>(null);
 
-// Aceita links no formato /loja/:slug/resto-do-caminho — usados pra
-// divulgar/entrar diretamente numa empresa sem domínio próprio ainda.
-// Depois de resolver a empresa, o prefixo é removido da URL (o resto do
-// app continua funcionando com as mesmas rotas de sempre, sem precisar
-// carregar :slug em cada uma delas).
-const SLUG_PREFIX_RE = /^\/loja\/([^/]+)(\/.*)?$/;
+// O slug da empresa é permanente na URL (/:slug/cardapio, /:slug/admin...) —
+// isso é o que faz um link, favorito ou F5 continuar funcionando mesmo
+// depois que existir mais de uma empresa na plataforma (ver App.tsx, que
+// aninha todas as rotas sob "/:companySlug"). Aqui só extraímos o
+// primeiro segmento da URL sem remover — quem decide para onde navegar é
+// o App.tsx via rotas normais.
+function firstPathSegment(pathname: string): string | null {
+  const match = pathname.match(/^\/([^/]+)/);
+  return match ? match[1] : null;
+}
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -32,8 +36,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     resolvedOnce.current = true;
 
     async function resolve() {
-      const match = window.location.pathname.match(SLUG_PREFIX_RE);
-      const slug = match?.[1];
+      const slug = firstPathSegment(window.location.pathname);
 
       try {
         const { data } = await api.get<Company>('/companies/resolve', {
@@ -45,8 +48,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setCurrentCompanySlug(data.slug);
         setCompany(data);
 
-        if (match) {
-          navigate(match[2] || '/cardapio', { replace: true });
+        // Sem slug na URL (ex.: raiz do domínio próprio de uma empresa,
+        // ou a URL crua do deploy de preview) — entra na rotas normais
+        // já com o slug resolvido.
+        if (!slug) {
+          navigate(`/${data.slug}/cardapio`, { replace: true });
         }
       } catch {
         setError(true);
@@ -74,4 +80,14 @@ export function useCompany() {
   const ctx = useContext(CompanyContext);
   if (!ctx) throw new Error('useCompany deve ser usado dentro de <CompanyProvider>');
   return ctx;
+}
+
+// Uso: const cp = useCompanyPath(); <Link to={cp('/cardapio')}>
+// Prefixa qualquer caminho absoluto com o slug da empresa atual — é
+// assim que todo link interno do app continua dentro do namespace da
+// empresa certa (/:slug/...). Só usar depois que <CompanyGate> já
+// garantiu que a empresa foi resolvida (company nunca é null aqui).
+export function useCompanyPath() {
+  const { company } = useCompany();
+  return (path: string) => `/${company!.slug}${path}`;
 }

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useCart } from '../../hooks/useCart';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import type { Address, Order, OrderType, PaymentMethod } from '../../types';
 
 function formatPrice(value: number) {
@@ -22,6 +23,7 @@ const emptyAddressForm = { street: '', number: '', complement: '', neighborhood:
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const cp = useCompanyPath();
   const queryClient = useQueryClient();
   const { cartQuery } = useCart();
   const cart = cartQuery.data;
@@ -68,7 +70,7 @@ export function CheckoutPage() {
         .then((r) => r.data),
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      navigate(`/pedido/${order.id}`);
+      navigate(cp(`/pedido/${order.id}`));
     },
     onError: (err) => {
       setError(isAxiosError(err) ? err.response?.data?.message ?? 'Não foi possível confirmar o pedido' : 'Erro inesperado');
@@ -95,7 +97,7 @@ export function CheckoutPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="text-lg font-medium">Seu carrinho está vazio</p>
-        <Link to="/cardapio" className="text-[var(--brand)] hover:underline">
+        <Link to={cp('/cardapio')} className="text-[var(--brand)] hover:underline">
           Ver cardápio
         </Link>
       </div>

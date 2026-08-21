@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompanyPath } from '../../contexts/CompanyContext';
 import { api } from '../../lib/api';
 import { Skeleton } from '../../components/ui/Skeleton';
 import type { SalesReport } from '../../types';
@@ -22,6 +23,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const cp = useCompanyPath();
 
   const { data: report, isLoading } = useQuery({
     queryKey: ['reports', 'sales', 'today'],
@@ -41,7 +43,7 @@ export function DashboardPage() {
           <h1 className="text-2xl font-semibold">Olá, {user?.name}</h1>
           <p className="mt-1 text-[var(--text-muted)]">Resumo de hoje. Para outros períodos, veja os relatórios completos.</p>
         </div>
-        <Link to="/admin/relatorios" className="text-sm text-[var(--brand)] hover:underline">
+        <Link to={cp('/admin/relatorios')} className="text-sm text-[var(--brand)] hover:underline">
           Ver relatórios →
         </Link>
       </div>

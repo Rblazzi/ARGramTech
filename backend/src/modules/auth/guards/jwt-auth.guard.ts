@@ -51,6 +51,7 @@ export class JwtAuthGuard implements CanActivate {
       role: membership.role,
       companyId: membership.companyId,
       membershipId: membership.id,
+      isPlatformAdmin: membership.user.isPlatformAdmin,
     };
     (request as TenantRequest & { user: AuthenticatedUser }).user = authenticatedUser;
 

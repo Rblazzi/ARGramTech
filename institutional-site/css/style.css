@@ -1050,6 +1050,15 @@ body::before {
   color: var(--text-faint);
 }
 
+.footer__admin-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer__admin-link:hover {
+  color: var(--text-faint);
+}
+
 /* ==========================================================================
    Botão voltar ao topo
    ========================================================================== */

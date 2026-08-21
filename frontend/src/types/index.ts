@@ -7,6 +7,7 @@ export interface AuthenticatedUser {
   role: UserRole;
   companyId: string;
   membershipId: string;
+  isPlatformAdmin: boolean;
 }
 
 // Dados públicos da empresa (o que dá pra mostrar antes de logar, pra

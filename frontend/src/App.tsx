@@ -10,6 +10,7 @@ import { DeliveryZonesPage } from './pages/admin/DeliveryZonesPage';
 import { CouponsPage } from './pages/admin/CouponsPage';
 import { PromotionsPage } from './pages/admin/PromotionsPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
+import { CreateCompanyPage } from './pages/admin/CreateCompanyPage';
 import { SiteLayout } from './components/site/SiteLayout';
 import { CardapioPage } from './pages/site/CardapioPage';
 import { ProductPage } from './pages/site/ProductPage';
@@ -65,6 +66,7 @@ export function App() {
             <Route path="cupons" element={<CouponsPage />} />
             <Route path="promocoes" element={<PromotionsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
+            <Route path="plataforma/nova-empresa" element={<CreateCompanyPage />} />
           </Route>
         </Route>
 

@@ -17,4 +17,7 @@ export interface AuthenticatedUser {
   role: UserRole;
   companyId: string;
   membershipId: string;
+  // Dono da plataforma (não de uma empresa específica) — só quem tem
+  // isso pode cadastrar novas empresas (ver PlatformAdminGuard).
+  isPlatformAdmin: boolean;
 }
